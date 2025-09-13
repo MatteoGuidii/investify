@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Progress } from './ui/progress';
 import { PlusCircle, RefreshCw, Wallet, Trash2 } from 'lucide-react';
 import { Portfolio, UserGoal } from '../lib/types';
+import { AiCoach } from './ai-coach';
 
 export function Dashboard() {
   const { 
@@ -390,6 +391,9 @@ export function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* AI Coach floating assistant */}
+      <AiCoach />
     </div>
   );
 }
