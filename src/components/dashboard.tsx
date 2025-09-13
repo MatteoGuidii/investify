@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useAppStore } from '../lib/store';
 import { apiService } from '../lib/api';
 import { Button } from './ui/button';
@@ -17,26 +17,52 @@ export function Dashboard() {
     setCurrentClient,
     removeUserGoal,
     isLoading,
-    setLoading,
-    setError
+    setError,
+    error
   } = useAppStore();
   
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const loadData = useCallback(async () => {
-    if (!currentClient) return;
+  const loadData = async () => {
+    if (!currentClient) {
+      console.warn('Cannot load data: no current client');
+      return;
+    }
 
-    setLoading(true);
+    // Check if we have authentication
+    const token = localStorage.getItem('rbc_jwt_token');
+    if (!token) {
+      console.error('No JWT token found');
+      setError('Authentication required. Please log in again.');
+      setCurrentView('auth');
+      return;
+    }
+
+    setIsRefreshing(true);
+    setError(null);
+    
     try {
+      console.log(`Loading data for client: ${currentClient.id}`);
+      
       // Get updated client data with current cash balance
       const clientResponse = await apiService.getClient(currentClient.id);
       if (clientResponse.success && clientResponse.data) {
+        console.log('Client data loaded successfully');
         setCurrentClient(clientResponse.data);
+      } else {
+        console.warn('Failed to load client data:', clientResponse.message);
+        if (clientResponse.message?.includes('Unauthorized')) {
+          setError('Session expired. Please log in again.');
+          setCurrentView('auth');
+          return;
+        }
       }
 
       // Get portfolios with full data including transactions and growth trends
       const portfolioResponse = await apiService.getClientPortfolios(currentClient.id);
       if (portfolioResponse.success && portfolioResponse.data) {
+        console.log(`Loaded ${portfolioResponse.data.length} portfolios`);
         setPortfolios(portfolioResponse.data);
         
         // If any portfolios exist but haven't been simulated, offer simulation
@@ -44,38 +70,30 @@ export function Dashboard() {
         if (unSimulatedPortfolios.length > 0) {
           console.info(`${unSimulatedPortfolios.length} portfolios available for simulation`);
         }
+      } else {
+        console.warn('Failed to load portfolios:', portfolioResponse.message);
+        if (portfolioResponse.message?.includes('Unauthorized')) {
+          setError('Session expired. Please log in again.');
+          setCurrentView('auth');
+          return;
+        }
+        setPortfolios([]);
       }
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       setError('Failed to load dashboard data. Please try refreshing.');
     } finally {
-      setLoading(false);
+      setIsRefreshing(false);
     }
-  }, [currentClient, setLoading, setCurrentClient, setError]);
-
-  const simulatePortfolios = useCallback(async (months: number = 12) => {
-    if (!currentClient || portfolios.length === 0) return;
-
-    setLoading(true);
-    try {
-      const response = await apiService.simulateClientPortfolios(currentClient.id, { months });
-      if (response.success) {
-        // Refresh data to get updated portfolios with simulation results
-        loadData();
-      } else {
-        setError(response.message || 'Simulation failed');
-      }
-    } catch (error) {
-      console.error('Error simulating portfolios:', error);
-      setError('Failed to simulate portfolios');
-    } finally {
-      setLoading(false);
-    }
-  }, [currentClient, portfolios.length, setLoading, setError, loadData]);
+  };
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    // Call loadData only once on mount if we have a current client
+    if (currentClient) {
+      loadData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentClient?.id]); // Only re-run if client ID changes
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-CA', {
@@ -121,12 +139,12 @@ export function Dashboard() {
     );
   }
 
-  if (isLoading && portfolios.length === 0) {
+  if ((isRefreshing || isLoading) && portfolios.length === 0) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex justify-center items-center h-64">
           <div className="text-center">
-            <RefreshCw className="w-8 h-8 mx-auto mb-4 animate-spin text-blue-600" />
+            <RefreshCw className="w-8 h-8 mx-auto mb-4 animate-spin rbc-blue" />
             <p className="text-gray-600">Loading your dashboard...</p>
           </div>
         </div>
@@ -136,27 +154,37 @@ export function Dashboard() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center">
+            <div className="text-red-600">⚠️</div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Error</h3>
+              <p className="text-sm text-red-700 mt-1">{error}</p>
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="ml-auto text-red-400 hover:text-red-600"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <h1 className="text-3xl font-bold rbc-blue">Dashboard</h1>
           <p className="text-gray-600">Welcome back, {currentClient.name}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={loadData} disabled={isLoading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
+          <Button variant="outline" onClick={() => { setError(null); loadData(); }} disabled={isRefreshing} className="border-gray-300 hover:border-rbc-blue hover:text-rbc-blue">
+            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Loading...' : 'Refresh'}
           </Button>
-          {portfolios.length > 0 && (
-            <Button 
-              variant="outline" 
-              onClick={() => simulatePortfolios()} 
-              disabled={isLoading}
-            >
-              Run Simulation
-            </Button>
-          )}
-          <Button onClick={() => setCurrentView('catalogue')}>
+          <Button onClick={() => setCurrentView('catalogue')} disabled={isRefreshing} className="bg-rbc-blue hover:bg-rbc-blue/90 text-white">
             <PlusCircle className="w-4 h-4 mr-2" />
             New Goal
           </Button>
@@ -165,25 +193,25 @@ export function Dashboard() {
 
       {/* Account Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <Card>
+        <Card className="border-gray-200 hover:border-rbc-blue/30 transition-colors">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">Available Cash</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center">
-              <Wallet className="w-5 h-5 mr-2 text-green-600" />
-              <span className="text-2xl font-bold">{formatCurrency(currentClient?.cash || 0)}</span>
+              <Wallet className="w-5 h-5 mr-2 rbc-yellow" />
+              <span className="text-2xl font-bold rbc-blue">{formatCurrency(currentClient?.cash || 0)}</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-gray-200 hover:border-rbc-blue/30 transition-colors">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">Total Invested</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center">
-              <span className="text-2xl font-bold">
+              <span className="text-2xl font-bold rbc-blue">
                 {formatCurrency(portfolios.reduce((sum, p) => sum + p.invested_amount, 0))}
               </span>
             </div>
@@ -193,13 +221,13 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-gray-200 hover:border-rbc-blue/30 transition-colors">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">Current Value</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center">
-              <span className="text-2xl font-bold">
+              <span className="text-2xl font-bold rbc-blue">
                 {formatCurrency(portfolios.reduce((sum, p) => sum + p.current_value, 0))}
               </span>
             </div>
@@ -213,13 +241,13 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-gray-200 hover:border-rbc-blue/30 transition-colors">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">Active Goals</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center">
-              <span className="text-2xl font-bold">{userGoals.length}</span>
+              <span className="text-2xl font-bold rbc-blue">{userGoals.length}</span>
             </div>
             <div className="text-xs text-gray-500 mt-1">
               {userGoals.filter(g => g.status === 'active').length} active

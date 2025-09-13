@@ -40,12 +40,12 @@ export function AuthForm() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md border-gray-200">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-blue-600">
+          <CardTitle className="text-2xl font-bold rbc-blue">
             RBC Goals
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-gray-600">
             Start your goal-based investing journey
           </CardDescription>
         </CardHeader>
@@ -92,14 +92,14 @@ export function AuthForm() {
             </div>
 
             {error && (
-              <div className="text-red-600 text-sm text-center bg-red-50 p-2 rounded">
+              <div className="text-red-600 text-sm text-center bg-red-50 p-2 rounded border border-red-200">
                 {error}
               </div>
             )}
 
             <Button 
               type="submit" 
-              className="w-full" 
+              className="w-full bg-rbc-blue hover:bg-rbc-blue/90 text-white" 
               disabled={isLoading}
             >
               {isLoading ? 'Setting up...' : 'Get Started'}

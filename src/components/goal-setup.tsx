@@ -72,7 +72,7 @@ export function GoalSetup() {
     );
     
     if (success) {
-      setCurrentView('catalogue'); // Return to catalogue to encourage setting up more goals
+      setCurrentView('dashboard'); // Go to dashboard to see the created goal
     }
   };
 

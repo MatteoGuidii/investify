@@ -42,17 +42,17 @@ export function GoalCatalogue() {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-medium text-blue-900">
+              <h3 className="font-medium rbc-blue">
                 You have {userGoals.length} active goal{userGoals.length !== 1 ? 's' : ''}
               </h3>
-              <p className="text-sm text-blue-700">
+              <p className="text-sm text-gray-600">
                 View your progress or add another goal below
               </p>
             </div>
             <Button
               variant="outline"
               onClick={() => setCurrentView('dashboard')}
-              className="border-blue-300 text-blue-700 hover:bg-blue-100"
+              className="border-gray-300 text-gray-700 hover:border-rbc-blue hover:text-rbc-blue"
             >
               View Dashboard
             </Button>
@@ -62,7 +62,7 @@ export function GoalCatalogue() {
 
       {/* Simple Header */}
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-3xl font-bold rbc-blue mb-2">
           {userGoals.length > 0 ? 'Add Another Goal' : 'Choose Your Goal'}
         </h1>
         <p className="text-gray-600">
@@ -73,7 +73,7 @@ export function GoalCatalogue() {
       {/* Simple Goals Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {GOAL_CATALOGUE.map((goal) => (
-          <Card key={goal.id} className="hover:shadow-md transition-shadow">
+          <Card key={goal.id} className="hover:shadow-md transition-all border-gray-200 hover:border-rbc-blue/30">
             <CardHeader>
               <div className="text-4xl mb-2">
                 {getCategoryIcon(goal.category)}
@@ -86,11 +86,11 @@ export function GoalCatalogue() {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">Target</span>
-                  <span className="font-semibold">{formatCurrency(goal.finalPrice)}</span>
+                  <span className="font-semibold rbc-blue">{formatCurrency(goal.finalPrice)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">Monthly from</span>
-                  <span className="text-sm">{formatCurrency(goal.minMonthlyInvestment)}</span>
+                  <span className="text-sm text-gray-700">{formatCurrency(goal.minMonthlyInvestment)}</span>
                 </div>
               </div>
             </CardContent>
@@ -98,8 +98,7 @@ export function GoalCatalogue() {
             <CardFooter>
               <Button 
                 onClick={() => handleSelectGoal(goal)}
-                className="w-full"
-                variant="outline"
+                className="w-full bg-rbc-blue hover:bg-rbc-blue/90 text-white"
               >
                 Start Saving
               </Button>
