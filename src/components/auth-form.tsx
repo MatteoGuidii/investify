@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { useAppStore } from '../lib/store';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -9,12 +8,9 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 
 export function AuthForm() {
-  const [teamName, setTeamName] = useState('');
   const [email, setEmail] = useState('');
   const [clientName, setClientName] = useState('');
-  const [clientEmail, setClientEmail] = useState('');
   const [initialCash, setInitialCash] = useState(10000);
-  const [step, setStep] = useState<'team' | 'client'>('team');
 
   const { 
     registerTeam, 
@@ -22,182 +18,129 @@ export function AuthForm() {
     setCurrentView, 
     isLoading, 
     error, 
-    user 
+    user,
+    loginAsTestUser
   } = useAppStore();
 
-  const handleTeamRegistration = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const success = await registerTeam(teamName, email);
-    if (success) {
-      setStep('client');
-    }
+  const handleTestLogin = async () => {
+    await loginAsTestUser();
   };
 
-  const handleClientCreation = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const success = await createClient(clientName, clientEmail, initialCash);
-    if (success) {
+    if (!user) {
+      // Register team with a default name (using email prefix)
+      const defaultTeamName = email.split('@')[0] + '-team';
+      const teamSuccess = await registerTeam(defaultTeamName, email);
+      if (!teamSuccess) return;
+    }
+    
+    // Create client
+    const clientSuccess = await createClient(clientName, email, initialCash);
+    if (clientSuccess) {
       setCurrentView('catalogue');
     }
   };
 
-  if (step === 'client' && user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-md"
-        >
-          <Card>
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-bold text-gray-900">
-                Welcome, {user.teamName}!
-              </CardTitle>
-              <CardDescription>
-                Let&apos;s create your investor profile to get started with goal-based investing.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleClientCreation} className="space-y-4">
-                <div>
-                  <Label htmlFor="clientName">Your Name</Label>
-                  <Input
-                    id="clientName"
-                    type="text"
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    placeholder="Enter your full name"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="clientEmail">Email Address</Label>
-                  <Input
-                    id="clientEmail"
-                    type="email"
-                    value={clientEmail}
-                    onChange={(e) => setClientEmail(e.target.value)}
-                    placeholder="your.email@example.com"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="initialCash">Initial Cash Balance</Label>
-                  <Input
-                    id="initialCash"
-                    type="number"
-                    value={initialCash}
-                    onChange={(e) => setInitialCash(Number(e.target.value))}
-                    placeholder="10000"
-                    min="100"
-                    step="100"
-                    required
-                  />
-                  <p className="text-sm text-gray-600 mt-1">
-                    This simulates the cash you have available to invest in your goals.
-                  </p>
-                </div>
-
-                {error && (
-                  <div className="text-red-600 text-sm text-center p-2 bg-red-50 rounded-lg">
-                    {error}
-                  </div>
-                )}
-
-                <Button 
-                  type="submit" 
-                  className="w-full"
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Creating Profile...' : 'Start Investing'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
-        <Card>
-          <CardHeader className="text-center">
-            <motion.div
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="mx-auto w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-4"
-            >
-              <span className="text-white text-2xl font-bold">R</span>
-            </motion.div>
-            <CardTitle className="text-2xl font-bold text-gray-900">
-              RBC Goals
-            </CardTitle>
-            <CardDescription>
-              Transform your investing from an abstract habit into a tangible goal-based journey
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleTeamRegistration} className="space-y-4">
-              <div>
-                <Label htmlFor="teamName">Team Name</Label>
-                <Input
-                  id="teamName"
-                  type="text"
-                  value={teamName}
-                  onChange={(e) => setTeamName(e.target.value)}
-                  placeholder="Enter your team name"
-                  required
-                />
-              </div>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="container mx-auto flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-16">
+        {/* Left Side: Video and Explanation */}
+        <div className="w-full max-w-lg text-center lg:text-left">
+          <h1 className="text-4xl font-bold text-gray-800 mb-4">Welcome to Your Future</h1>
+          <p className="text-lg text-gray-600 mb-6">
+            Our smart robo-advisor helps you set, plan, and achieve your financial goals with personalized investment strategies. See how it works in this short video.
+          </p>
+          <div className="aspect-video rounded-lg overflow-hidden shadow-2xl border-4 border-white">
+            <iframe 
+              className="w-full h-full"
+              src="https://www.youtube.com/embed/gQNfSRC8Rb0"
+              title="YouTube video player" 
+              frameBorder="0" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+              allowFullScreen
+            ></iframe>
+          </div>
+        </div>
 
-              <div>
-                <Label htmlFor="email">Contact Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="team@example.com"
-                  required
-                />
-              </div>
-
-              {error && (
-                <div className="text-red-600 text-sm text-center p-2 bg-red-50 rounded-lg">
-                  {error}
-                </div>
-              )}
-
-              <Button 
-                type="submit" 
-                className="w-full"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Registering...' : 'Get Started'}
-              </Button>
-            </form>
-
-            <div className="mt-6 text-center text-sm text-gray-600">
-              <p>🏆 Hack the North 2025 Demo</p>
-              <p>Real API integration with portfolio simulation</p>
+        {/* Right Side: Auth Form */}
+        <Card className="w-full max-w-md shadow-xl">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold rbc-blue">
+            RBC Goals
+          </CardTitle>
+          <CardDescription className="text-gray-600">
+            Start your goal-based investing journey
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                required
+              />
             </div>
-          </CardContent>
+
+            <div>
+              <Label htmlFor="clientName">Your Name</Label>
+              <Input
+                id="clientName"
+                type="text"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+                placeholder="Enter your name"
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="initialCash">Starting Cash</Label>
+              <Input
+                id="initialCash"
+                type="number"
+                value={initialCash}
+                onChange={(e) => setInitialCash(Number(e.target.value))}
+                min="100"
+                step="100"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                This represents your available investment funds
+              </p>
+            </div>
+
+            {error && (
+              <div className="text-red-600 text-sm text-center bg-red-50 p-2 rounded border border-red-200">
+                {error}
+              </div>
+            )}
+
+            <Button 
+              type="submit" 
+              className="w-full bg-rbc-blue hover:bg-rbc-blue/90 text-white" 
+              disabled={isLoading}
+            >
+              {isLoading ? 'Setting up...' : 'Get Started'}
+            </Button>
+          </form>
+          <Button 
+            variant="outline" 
+            className="w-full mt-2" 
+            onClick={handleTestLogin}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Logging in...' : 'Enter Test Mode'}
+          </Button>
+        </CardContent>
         </Card>
-      </motion.div>
+      </div>
     </div>
   );
 }

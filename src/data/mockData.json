@@ -1,0 +1,204 @@
+{
+  "spending": {
+    "September 2024": {
+      "food": 420,
+      "rent": 800,
+      "entertainment": 140,
+      "shopping": 110,
+      "transportation": 115,
+      "utilities": 80,
+      "subscriptions": 45,
+      "education": 160,
+      "health": 40,
+      "other": 70
+    },
+    "October 2024": {
+      "food": 435,
+      "rent": 800,
+      "entertainment": 210,
+      "shopping": 150,
+      "transportation": 118,
+      "utilities": 82,
+      "subscriptions": 45,
+      "education": 90,
+      "health": 35,
+      "other": 75
+    },
+    "November 2024": {
+      "food": 445,
+      "rent": 800,
+      "entertainment": 230,
+      "shopping": 320,
+      "transportation": 120,
+      "utilities": 83,
+      "subscriptions": 45,
+      "education": 60,
+      "health": 55,
+      "other": 90
+    },
+    "December 2024": {
+      "food": 470,
+      "rent": 800,
+      "entertainment": 290,
+      "shopping": 400,
+      "transportation": 100,
+      "utilities": 86,
+      "subscriptions": 50,
+      "education": 40,
+      "health": 60,
+      "other": 120
+    },
+    "January 2025": {
+      "food": 390,
+      "rent": 800,
+      "entertainment": 160,
+      "shopping": 130,
+      "transportation": 108,
+      "utilities": 88,
+      "subscriptions": 50,
+      "education": 140,
+      "health": 30,
+      "other": 85
+    },
+    "February 2025": {
+      "food": 405,
+      "rent": 800,
+      "entertainment": 170,
+      "shopping": 145,
+      "transportation": 112,
+      "utilities": 84,
+      "subscriptions": 50,
+      "education": 110,
+      "health": 35,
+      "other": 78
+    },
+    "March 2025": {
+      "food": 450,
+      "rent": 800,
+      "entertainment": 180,
+      "shopping": 220,
+      "transportation": 120,
+      "utilities": 85,
+      "subscriptions": 50,
+      "education": 70,
+      "health": 45,
+      "other": 95
+    },
+    "April 2025": {
+      "food": 380,
+      "rent": 800,
+      "entertainment": 240,
+      "shopping": 165,
+      "transportation": 110,
+      "utilities": 90,
+      "subscriptions": 50,
+      "education": 55,
+      "health": 38,
+      "other": 130
+    },
+    "May 2025": {
+      "food": 420,
+      "rent": 800,
+      "entertainment": 320,
+      "shopping": 280,
+      "transportation": 105,
+      "utilities": 88,
+      "subscriptions": 55,
+      "education": 50,
+      "health": 42,
+      "other": 87
+    },
+    "June 2025": {
+      "food": 460,
+      "rent": 800,
+      "entertainment": 195,
+      "shopping": 340,
+      "transportation": 115,
+      "utilities": 92,
+      "subscriptions": 55,
+      "education": 45,
+      "health": 50,
+      "other": 108
+    },
+    "July 2025": {
+      "food": 410,
+      "rent": 800,
+      "entertainment": 280,
+      "shopping": 150,
+      "transportation": 130,
+      "utilities": 95,
+      "subscriptions": 55,
+      "education": 40,
+      "health": 48,
+      "other": 125
+    },
+    "August 2025": {
+      "food": 440,
+      "rent": 800,
+      "entertainment": 350,
+      "shopping": 190,
+      "transportation": 125,
+      "utilities": 87,
+      "subscriptions": 55,
+      "education": 35,
+      "health": 52,
+      "other": 98
+    }
+  },
+  "goals": [
+    {
+      "name": "European Vacation",
+      "target": 3500,
+      "currentSaved": 1450,
+      "monthlyContribution": 300,
+      "category": "travel",
+      "deadline": "Summer 2026"
+    },
+    {
+      "name": "New Laptop",
+      "target": 1400,
+      "currentSaved": 620,
+      "monthlyContribution": 170,
+      "category": "technology",
+      "deadline": "January 2026"
+    },
+    {
+      "name": "Emergency Fund",
+      "target": 3000,
+      "currentSaved": 1100,
+      "monthlyContribution": 220,
+      "category": "savings",
+      "deadline": "June 2026"
+    },
+    {
+      "name": "Tuition Savings",
+      "target": 8000,
+      "currentSaved": 2100,
+      "monthlyContribution": 400,
+      "category": "education",
+      "deadline": "September 2026"
+    },
+    {
+      "name": "Phone Upgrade",
+      "target": 1300,
+      "currentSaved": 300,
+      "monthlyContribution": 120,
+      "category": "technology",
+      "deadline": "November 2025"
+    },
+    {
+      "name": "Gym Membership Upgrade",
+      "target": 600,
+      "currentSaved": 150,
+      "monthlyContribution": 50,
+      "category": "health",
+      "deadline": "February 2026"
+    }
+  ],
+  "monthlyIncome": 2800,
+  "profile": {
+    "name": "Alex Chen",
+    "age": 21,
+    "status": "University Student"
+  }
+}

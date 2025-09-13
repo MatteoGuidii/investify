@@ -26,7 +26,7 @@ interface AppState {
   setSelectedGoal: (goal: Goal) => void;
   addUserGoal: (goal: UserGoal) => void;
   updateUserGoal: (goalId: string, updates: Partial<UserGoal>) => void;
-  removeUserGoal: (goalId: string) => void;
+  removeUserGoal: (goalId: string) => Promise<void>;
   setLoading: (loading: boolean) => void;
   setCurrentView: (view: AppState['currentView']) => void;
   setError: (error: string | null) => void;
@@ -34,6 +34,7 @@ interface AppState {
   // Async actions
   registerTeam: (teamName: string, email: string) => Promise<boolean>;
   createClient: (name: string, email: string, initialCash: number) => Promise<boolean>;
+  loginAsTestUser: () => Promise<void>;
   createGoalBasedInvestment: (goalId: string, monthlyContribution: number, targetDate: Date) => Promise<boolean>;
   logout: () => void;
   initializeFromStorage: () => Promise<void>;
@@ -88,10 +89,29 @@ export const useAppStore = create<AppState>()(
           ),
         })),
 
-      removeUserGoal: (goalId: string) =>
-        set((state) => ({
-          userGoals: state.userGoals.filter((goal) => goal.id !== goalId),
-        })),
+      removeUserGoal: async (goalId: string) => {
+        const { userGoals, setLoading, setError } = get();
+        const goalToRemove = userGoals.find(g => g.id === goalId);
+        
+        if (!goalToRemove) return;
+
+        setLoading(true);
+        try {
+          // If the goal has an associated portfolio, we could delete it
+          // For now, we'll just remove from local state and let user manage portfolio separately
+          // This prevents accidental deletion of portfolios with multiple goals
+          
+          set((state) => ({
+            userGoals: state.userGoals.filter((goal) => goal.id !== goalId),
+          }));
+          
+        } catch (error) {
+          console.error('Error removing goal:', error);
+          setError('Failed to remove goal');
+        } finally {
+          setLoading(false);
+        }
+      },
 
       setLoading: (loading: boolean) => set({ isLoading: loading }),
 
@@ -255,22 +275,28 @@ export const useAppStore = create<AppState>()(
 
           addUserGoal(userGoal);
 
-          // Run initial simulation to get projections
+          // Run enhanced simulation to get realistic projections
           try {
-            const simulationResponse = await apiService.simulateClientPortfolios(client.id, {
-              months: Math.min(12, Math.ceil((targetDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 30)))
-            });
+            const totalMonths = Math.ceil((targetDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 30));
+            const projectionResponse = await apiService.projectGoalCompletion(
+              client.id,
+              selectedGoal.finalPrice,
+              monthlyContribution,
+              totalMonths
+            );
 
-            if (simulationResponse.success && simulationResponse.data?.results?.length) {
-              const result = simulationResponse.data.results.find(r => r.portfolioId === portfolio.id);
-              if (result) {
-                // Update goal with simulation data
-                const updatedGoal = { ...userGoal, lastSimulation: result };
-                addUserGoal(updatedGoal);
-              }
+            if (projectionResponse.success && projectionResponse.data) {
+              const projection = projectionResponse.data;
+              // Update goal with enhanced projection data
+              const updatedGoal = { 
+                ...userGoal, 
+                enhancedProjection: projection,
+                projectedCompletion: new Date(Date.now() + (projection.months * 30 * 24 * 60 * 60 * 1000))
+              };
+              addUserGoal(updatedGoal);
             }
           } catch (error) {
-            console.warn('Simulation failed, but portfolio was created:', error);
+            console.warn('Enhanced projection failed, but portfolio was created:', error);
           }
 
           return true;
@@ -302,6 +328,43 @@ export const useAppStore = create<AppState>()(
         apiService.clearAuthToken();
       },
 
+      loginAsTestUser: async () => {
+        const { setLoading, setError, registerTeam, createClient, setCurrentView, user, logout } = get();
+        
+        setLoading(true);
+        setError(null);
+
+        const testEmail = `test-${Date.now()}@goals.app`;
+        const testTeamName = `test-team-${Date.now()}`;
+        const testClientName = 'Test User';
+        const testInitialCash = 50000;
+
+        // Logout any existing user to ensure a clean test session
+        if (user) {
+          logout();
+        }
+
+        // The registerTeam function will set the user and token
+        const teamSuccess = await registerTeam(testTeamName, testEmail);
+        
+        if (!teamSuccess) {
+          // If team registration fails, we can't proceed.
+          // The error is already set by registerTeam, so we just stop.
+          setLoading(false);
+          return;
+        }
+
+        // The createClient function will set the current client
+        const clientSuccess = await createClient(testClientName, testEmail, testInitialCash);
+
+        if (clientSuccess) {
+          setCurrentView('dashboard');
+        } 
+        // Error is handled by createClient
+
+        setLoading(false);
+      },
+
       initializeFromStorage: async () => {
         const { setUser, setCurrentClient, setCurrentView } = get();
 
@@ -322,7 +385,7 @@ export const useAppStore = create<AppState>()(
               if (storedClient) {
                 const client: Client = JSON.parse(storedClient);
                 setCurrentClient(client);
-                setCurrentView('dashboard');
+                setCurrentView('catalogue'); // Always start with catalogue for goal-first approach
               } else {
                 setCurrentView('catalogue');
               }
