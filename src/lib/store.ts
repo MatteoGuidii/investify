@@ -358,7 +358,7 @@ export const useAppStore = create<AppState>()(
         const clientSuccess = await createClient(testClientName, testEmail, testInitialCash);
 
         if (clientSuccess) {
-          setCurrentView('dashboard');
+          setCurrentView('catalogue');
         } 
         // Error is handled by createClient
 
