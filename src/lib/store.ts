@@ -26,7 +26,7 @@ interface AppState {
   setSelectedGoal: (goal: Goal) => void;
   addUserGoal: (goal: UserGoal) => void;
   updateUserGoal: (goalId: string, updates: Partial<UserGoal>) => void;
-  removeUserGoal: (goalId: string) => void;
+  removeUserGoal: (goalId: string) => Promise<void>;
   setLoading: (loading: boolean) => void;
   setCurrentView: (view: AppState['currentView']) => void;
   setError: (error: string | null) => void;
@@ -88,10 +88,29 @@ export const useAppStore = create<AppState>()(
           ),
         })),
 
-      removeUserGoal: (goalId: string) =>
-        set((state) => ({
-          userGoals: state.userGoals.filter((goal) => goal.id !== goalId),
-        })),
+      removeUserGoal: async (goalId: string) => {
+        const { userGoals, setLoading, setError } = get();
+        const goalToRemove = userGoals.find(g => g.id === goalId);
+        
+        if (!goalToRemove) return;
+
+        setLoading(true);
+        try {
+          // If the goal has an associated portfolio, we could delete it
+          // For now, we'll just remove from local state and let user manage portfolio separately
+          // This prevents accidental deletion of portfolios with multiple goals
+          
+          set((state) => ({
+            userGoals: state.userGoals.filter((goal) => goal.id !== goalId),
+          }));
+          
+        } catch (error) {
+          console.error('Error removing goal:', error);
+          setError('Failed to remove goal');
+        } finally {
+          setLoading(false);
+        }
+      },
 
       setLoading: (loading: boolean) => set({ isLoading: loading }),
 
@@ -328,7 +347,7 @@ export const useAppStore = create<AppState>()(
               if (storedClient) {
                 const client: Client = JSON.parse(storedClient);
                 setCurrentClient(client);
-                setCurrentView('dashboard');
+                setCurrentView('catalogue'); // Always start with catalogue for goal-first approach
               } else {
                 setCurrentView('catalogue');
               }

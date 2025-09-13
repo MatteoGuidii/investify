@@ -7,7 +7,7 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 
 export function GoalCatalogue() {
-  const { setSelectedGoal, setCurrentView } = useAppStore();
+  const { setSelectedGoal, setCurrentView, userGoals } = useAppStore();
 
   const handleSelectGoal = (goal: Goal) => {
     setSelectedGoal(goal);
@@ -37,10 +37,33 @@ export function GoalCatalogue() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+      {/* Existing Goals Banner */}
+      {userGoals.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-medium text-blue-900">
+                You have {userGoals.length} active goal{userGoals.length !== 1 ? 's' : ''}
+              </h3>
+              <p className="text-sm text-blue-700">
+                View your progress or add another goal below
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => setCurrentView('dashboard')}
+              className="border-blue-300 text-blue-700 hover:bg-blue-100"
+            >
+              View Dashboard
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Simple Header */}
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Choose Your Goal
+          {userGoals.length > 0 ? 'Add Another Goal' : 'Choose Your Goal'}
         </h1>
         <p className="text-gray-600">
           Select what you want to save for
