@@ -40,19 +40,15 @@ export function GoalSetup() {
   defaultTargetDate.setFullYear(defaultTargetDate.getFullYear() + 2);
 
   const [targetDate, setTargetDate] = useState(defaultTargetDate.toISOString().split('T')[0]);
-    const [selectedProfileName, setSelectedProfileName] = useState<RiskProfile['name'] | 'Savings'>('Growth');
-    const [riskPerspectiveProfile, setRiskPerspectiveProfile] = useState<string | null>(null);
+  const [selectedProfileName, setSelectedProfileName] = useState<RiskProfile['name'] | 'Savings'>('Growth');
+  const [riskPerspectiveProfile, setRiskPerspectiveProfile] = useState<string | null>(null);
   const [hiddenProfiles, setHiddenProfiles] = useState<string[]>([]);
   const [hoveredProfile, setHoveredProfile] = useState<string | null>(null);
 
-  if (!selectedGoal) {
-    if (typeof window !== 'undefined') {
-      setCurrentView('catalogue');
-    }
-    return null;
-  }
-
+  // Move all useMemo hooks before conditional logic
   const displayData = useMemo(() => {
+    if (!selectedGoal) return {};
+    
     const data: { [key: string]: { pmt: number, months: number, monthsLower?: number, monthsUpper?: number } } = {};
 
     const fixedDateTimeline = (() => {
@@ -97,7 +93,7 @@ export function GoalSetup() {
       }
     });
     return data;
-  }, [targetDate, calculationMode, monthlyAmount, selectedGoal.finalPrice]);
+  }, [selectedGoal, targetDate, calculationMode, monthlyAmount]);
 
   const timelineInMonths = useMemo(() => {
     if (calculationMode === 'fixedDate') {
@@ -117,34 +113,73 @@ export function GoalSetup() {
     if (timelineInMonths <= 0) return [];
     const data = [];
     const pmtForSelectedProfile = displayData[selectedProfileName]?.pmt || 0;
+    
+    // Only calculate data points for every few months to reduce data points and improve performance
+    const dataPointInterval = Math.max(1, Math.floor(timelineInMonths / 50)); // Max 50 data points
+    
+    // Helper function to calculate future value
+    const calcFv = (rate: number, n: number, p: number) => {
+      const monthlyRate = rate / 12;
+      if (monthlyRate > 0) {
+        return p * (Math.pow(1 + monthlyRate, n) - 1) / monthlyRate;
+      }
+      return p * n;
+    };
 
-    for (let i = 0; i <= timelineInMonths; i++) {
-      const monthData: { month: number; [key: string]: number } = { month: i };
+    for (let i = 0; i <= timelineInMonths; i += dataPointInterval) {
+      const actualMonth = Math.min(i, timelineInMonths); // Ensure we include the final month
+      const monthData: { month: number; [key: string]: number } = { month: actualMonth };
 
-      monthData['totalInvested'] = i * pmtForSelectedProfile;
+      // Always include total invested line
+      monthData['totalInvested'] = actualMonth * pmtForSelectedProfile;
       
-      ALL_PROFILES.forEach(profile => {
+      // Only calculate data for visible profiles and selected profile
+      const profilesToCalculate = ALL_PROFILES.filter(profile => 
+        !hiddenProfiles.includes(profile.name) || profile.name === selectedProfileName
+      );
+
+      profilesToCalculate.forEach(profile => {
         const pmt = displayData[profile.name]?.pmt || 0;
-
-        const calcFv = (rate: number, n: number, p: number) => {
-          const monthlyRate = rate / 12;
-          if (monthlyRate > 0) {
-            return p * (Math.pow(1 + monthlyRate, n) - 1) / monthlyRate;
-          }
-          return p * n;
-        };
-
-        monthData[profile.name] = calcFv(profile.expectedReturn, i, pmt);
-        const lowerBound = calcFv(profile.range.lower, i, pmt);
-        const upperBound = calcFv(profile.range.upper, i, pmt);
-        monthData[`${profile.name}_lower`] = lowerBound;
-        monthData[`${profile.name}_upper`] = upperBound;
-        monthData[`${profile.name}_range`] = upperBound - lowerBound;
+        monthData[profile.name] = calcFv(profile.expectedReturn, actualMonth, pmt);
+        
+        // Only calculate risk ranges if the risk perspective is enabled for this profile
+        if (riskPerspectiveProfile === profile.name && profile.name !== 'Savings') {
+          const lowerBound = calcFv(profile.range.lower, actualMonth, pmt);
+          const upperBound = calcFv(profile.range.upper, actualMonth, pmt);
+          monthData[`${profile.name}_lower`] = lowerBound;
+          monthData[`${profile.name}_upper`] = upperBound;
+          monthData[`${profile.name}_range`] = upperBound - lowerBound;
+        }
       });
       data.push(monthData);
     }
+    
+    // Ensure the final data point is included
+    if (data[data.length - 1]?.month !== timelineInMonths) {
+      const monthData: { month: number; [key: string]: number } = { month: timelineInMonths };
+      monthData['totalInvested'] = timelineInMonths * pmtForSelectedProfile;
+      
+      const profilesToCalculate = ALL_PROFILES.filter(profile => 
+        !hiddenProfiles.includes(profile.name) || profile.name === selectedProfileName
+      );
+
+      profilesToCalculate.forEach(profile => {
+        const pmt = displayData[profile.name]?.pmt || 0;
+        monthData[profile.name] = calcFv(profile.expectedReturn, timelineInMonths, pmt);
+        
+        if (riskPerspectiveProfile === profile.name && profile.name !== 'Savings') {
+          const lowerBound = calcFv(profile.range.lower, timelineInMonths, pmt);
+          const upperBound = calcFv(profile.range.upper, timelineInMonths, pmt);
+          monthData[`${profile.name}_lower`] = lowerBound;
+          monthData[`${profile.name}_upper`] = upperBound;
+          monthData[`${profile.name}_range`] = upperBound - lowerBound;
+        }
+      });
+      data.push(monthData);
+    }
+    
     return data;
-  }, [timelineInMonths, displayData, selectedProfileName]);
+  }, [timelineInMonths, displayData, selectedProfileName, hiddenProfiles, riskPerspectiveProfile]);
 
   const goalIntersectionPoints = useMemo(() => {
     const points: { [key: string]: number } = {};
@@ -161,9 +196,20 @@ export function GoalSetup() {
     return points;
   }, [chartData, selectedGoal, hiddenProfiles]);
 
-  const GoalMarkerDot = (props: any) => {
-    const { cx, cy, dataKey, payload } = props;
+  // Early return after all hooks are called
+  if (!selectedGoal) {
+    if (typeof window !== 'undefined') {
+      setCurrentView('catalogue');
+    }
+    return null;
+  }
+
+  const GoalMarkerDot = (props: { cx?: number; cy?: number; payload?: { month: number }; [key: string]: unknown }) => {
+    const { cx, cy, payload } = props;
+    if (!cx || !cy || !payload) return null;
+    
     const month = payload.month;
+    const dataKey = props.dataKey as string;
     const intersectionMonth = goalIntersectionPoints[dataKey];
 
     if (month === intersectionMonth) {
@@ -172,8 +218,6 @@ export function GoalSetup() {
 
     return null;
   };
-
-    const selectedProfile = ALL_PROFILES.find(p => p.name === selectedProfileName)!;
 
   const handleCreateGoal = async () => {
     const profileData = displayData[selectedProfileName];
@@ -197,7 +241,17 @@ export function GoalSetup() {
     return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', minimumFractionDigits: 0 }).format(amount);
   };
 
-    const CustomTooltip = ({ active, payload, label }: any) => {
+    const CustomTooltip = ({ active, payload, label }: { 
+      active?: boolean; 
+      payload?: Array<{ 
+        dataKey: string; 
+        value: number; 
+        name: string; 
+        color: string; 
+        payload: { [key: string]: number } 
+      }>; 
+      label?: string | number;
+    }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
 
@@ -205,7 +259,7 @@ export function GoalSetup() {
         <div className="p-2 bg-white border rounded-lg shadow-lg">
           <p className="font-bold mb-2 text-sm text-gray-700">{`Month: ${label}`}</p>
           <ul className="space-y-1">
-            {payload.map((pld: any) => {
+            {payload.map((pld: { dataKey: string; value: number; name: string; color: string; payload: { [key: string]: number } }) => {
               if (pld.dataKey.includes('_lower') || pld.dataKey.includes('_range') || pld.dataKey.includes('_upper')) return null;
 
               const isRiskProfile = riskPerspectiveProfile === pld.dataKey;
@@ -217,7 +271,7 @@ export function GoalSetup() {
                   {`${pld.name}: ${formatCurrency(pld.value)}`}
                   {isRiskProfile && (
                     <div className="pl-3 text-gray-500 font-normal">
-                      <p>Range: {formatCurrency(lowerBound)} - {formatCurrency(upperBound)}</p>
+                      <p>Risk Range: {formatCurrency(lowerBound)} - {formatCurrency(upperBound)}</p>
                     </div>
                   )}
                 </li>
@@ -239,23 +293,34 @@ export function GoalSetup() {
     }
   };
 
-  const renderLegend = (props: any) => {
+  const renderLegend = (props: { payload?: readonly unknown[] }) => {
     const { payload } = props;
 
     return (
       <div className="flex justify-center items-center space-x-4 mt-4">
-        {payload.map((entry: any, index: number) => (
-          <div 
-            key={`item-${index}`} 
-            onClick={() => handleLegendClick(entry.dataKey)}
-            onMouseEnter={() => setHoveredProfile(entry.dataKey)}
-            onMouseLeave={() => setHoveredProfile(null)}
-            className={`flex items-center space-x-2 cursor-pointer transition-opacity ${hiddenProfiles.includes(entry.dataKey) ? 'opacity-50' : 'opacity-100'}`}
-          >
-            <div style={{ width: 12, height: 12, backgroundColor: entry.color }}></div>
-            <span className="text-sm text-gray-600">{entry.value}</span>
-          </div>
-        ))}
+        {payload?.map((item: unknown, index: number) => {
+          const entry = item as { dataKey: string; value: string; color: string };
+          
+          // Filter out any risk-related entries that shouldn't show in legend
+          if (entry.dataKey.includes('_lower') || 
+              entry.dataKey.includes('_upper') || 
+              entry.dataKey.includes('_range')) {
+            return null;
+          }
+          
+          return (
+            <div 
+              key={`item-${index}`} 
+              onClick={() => handleLegendClick(entry.dataKey)}
+              onMouseEnter={() => setHoveredProfile(entry.dataKey)}
+              onMouseLeave={() => setHoveredProfile(null)}
+              className={`flex items-center space-x-2 cursor-pointer transition-opacity ${hiddenProfiles.includes(entry.dataKey) ? 'opacity-50' : 'opacity-100'}`}
+            >
+              <div style={{ width: 12, height: 12, backgroundColor: entry.color }}></div>
+              <span className="text-sm text-gray-600">{entry.value}</span>
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -399,15 +464,36 @@ export function GoalSetup() {
               <CardDescription>How your investment could grow over {timelineInMonths} months.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div style={{ width: '100%', height: 300 }}>
+              <div style={{ width: '100%', height: 400 }}>
                 <ResponsiveContainer>
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" label={{ value: 'Months', position: 'insideBottom', offset: -5 }} />
-                    <YAxis tickFormatter={(value) => formatCurrency(value)} />
+                  <LineChart 
+                    data={chartData} 
+                    margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis 
+                      dataKey="month" 
+                      label={{ value: 'Months', position: 'insideBottom', offset: -5 }} 
+                      stroke="#666"
+                    />
+                    <YAxis 
+                      tickFormatter={(value) => {
+                        if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+                        if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
+                        return formatCurrency(value);
+                      }}
+                      domain={[0, (dataMax: number) => Math.max(dataMax * 1.1, selectedGoal.finalPrice * 1.2)]}
+                      stroke="#666"
+                    />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend content={renderLegend} />
-                    <ReferenceLine y={selectedGoal.finalPrice} label={{ value: 'Your Goal', position: 'insideTopLeft', fill: '#666' }} stroke="#ccc" strokeDasharray="3 3" />
+                    <ReferenceLine 
+                      y={selectedGoal.finalPrice} 
+                      label={{ value: 'Your Goal', position: 'insideTopLeft', fill: '#666', fontSize: 12 }} 
+                      stroke="#e11d48" 
+                      strokeDasharray="5 5" 
+                      strokeWidth={2}
+                    />
                     <Line
                       type="monotone"
                       dataKey="totalInvested"
@@ -434,10 +520,9 @@ export function GoalSetup() {
                               <Area
                                 stackId={`range-${profile.name}`}
                                 dataKey={`${profile.name}_range`}
-                                name={`${profile.name} 1-Sigma Range`}
                                 stroke="none"
                                 fill={PROFILE_COLORS[profile.name]}
-                                fillOpacity={0.3}
+                                fillOpacity={0.2}
                               />
                               <Line
                                 type="monotone"
@@ -461,10 +546,11 @@ export function GoalSetup() {
                             type="monotone" 
                             dataKey={profile.name} 
                             stroke={PROFILE_COLORS[profile.name]} 
-                            strokeWidth={hoveredProfile === profile.name ? 4 : (selectedProfileName === profile.name ? 2.5 : 1.5)}
+                            strokeWidth={hoveredProfile === profile.name ? 4 : (selectedProfileName === profile.name ? 3 : 2)}
                             hide={hiddenProfiles.includes(profile.name)}
                             dot={<GoalMarkerDot dataKey={profile.name} />}
-                            strokeDasharray={profile.name === 'Savings' ? '5 5' : '0'}
+                            strokeDasharray={profile.name === 'Savings' ? '8 4' : '0'}
+                            connectNulls={false}
                           />
                         </g>
                       );
