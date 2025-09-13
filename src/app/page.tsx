@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { useAppStore } from '@/lib/store';
 import { GoalCatalogue } from '@/components/goal-catalogue';
 import { GoalSetup } from '@/components/goal-setup';
@@ -37,23 +36,11 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-white">
       <Header />
-      
-      <motion.main
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="pt-20"
-      >
+      <main className="pt-16">
         {renderCurrentView()}
-      </motion.main>
-      
-      {/* Background decorations */}
-      <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-1/4 -left-4 w-72 h-72 bg-blue-100 rounded-full opacity-20 blur-3xl" />
-        <div className="absolute bottom-1/4 -right-4 w-72 h-72 bg-purple-100 rounded-full opacity-20 blur-3xl" />
-      </div>
+      </main>
     </div>
   );
 }
