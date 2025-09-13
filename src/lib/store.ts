@@ -34,6 +34,7 @@ interface AppState {
   // Async actions
   registerTeam: (teamName: string, email: string) => Promise<boolean>;
   createClient: (name: string, email: string, initialCash: number) => Promise<boolean>;
+  loginAsTestUser: () => Promise<void>;
   createGoalBasedInvestment: (goalId: string, monthlyContribution: number, targetDate: Date) => Promise<boolean>;
   logout: () => void;
   initializeFromStorage: () => Promise<void>;
@@ -325,6 +326,43 @@ export const useAppStore = create<AppState>()(
 
         // Clear API token
         apiService.clearAuthToken();
+      },
+
+      loginAsTestUser: async () => {
+        const { setLoading, setError, registerTeam, createClient, setCurrentView, user, logout } = get();
+        
+        setLoading(true);
+        setError(null);
+
+        const testEmail = `test-${Date.now()}@goals.app`;
+        const testTeamName = `test-team-${Date.now()}`;
+        const testClientName = 'Test User';
+        const testInitialCash = 50000;
+
+        // Logout any existing user to ensure a clean test session
+        if (user) {
+          logout();
+        }
+
+        // The registerTeam function will set the user and token
+        const teamSuccess = await registerTeam(testTeamName, testEmail);
+        
+        if (!teamSuccess) {
+          // If team registration fails, we can't proceed.
+          // The error is already set by registerTeam, so we just stop.
+          setLoading(false);
+          return;
+        }
+
+        // The createClient function will set the current client
+        const clientSuccess = await createClient(testClientName, testEmail, testInitialCash);
+
+        if (clientSuccess) {
+          setCurrentView('dashboard');
+        } 
+        // Error is handled by createClient
+
+        setLoading(false);
       },
 
       initializeFromStorage: async () => {

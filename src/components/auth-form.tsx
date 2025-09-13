@@ -18,8 +18,13 @@ export function AuthForm() {
     setCurrentView, 
     isLoading, 
     error, 
-    user 
+    user,
+    loginAsTestUser
   } = useAppStore();
+
+  const handleTestLogin = async () => {
+    await loginAsTestUser();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +45,27 @@ export function AuthForm() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md border-gray-200">
+      <div className="container mx-auto flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-16">
+        {/* Left Side: Video and Explanation */}
+        <div className="w-full max-w-lg text-center lg:text-left">
+          <h1 className="text-4xl font-bold text-gray-800 mb-4">Welcome to Your Future</h1>
+          <p className="text-lg text-gray-600 mb-6">
+            Our smart robo-advisor helps you set, plan, and achieve your financial goals with personalized investment strategies. See how it works in this short video.
+          </p>
+          <div className="aspect-video rounded-lg overflow-hidden shadow-2xl border-4 border-white">
+            <iframe 
+              className="w-full h-full"
+              src="https://www.youtube.com/embed/gQNfSRC8Rb0"
+              title="YouTube video player" 
+              frameBorder="0" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+              allowFullScreen
+            ></iframe>
+          </div>
+        </div>
+
+        {/* Right Side: Auth Form */}
+        <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold rbc-blue">
             RBC Goals
@@ -105,8 +130,17 @@ export function AuthForm() {
               {isLoading ? 'Setting up...' : 'Get Started'}
             </Button>
           </form>
+          <Button 
+            variant="outline" 
+            className="w-full mt-2" 
+            onClick={handleTestLogin}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Logging in...' : 'Enter Test Mode'}
+          </Button>
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }
