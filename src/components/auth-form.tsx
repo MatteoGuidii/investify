@@ -8,7 +8,6 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 
 export function AuthForm() {
-  const [teamName, setTeamName] = useState('');
   const [email, setEmail] = useState('');
   const [clientName, setClientName] = useState('');
   const [initialCash, setInitialCash] = useState(10000);
@@ -26,13 +25,14 @@ export function AuthForm() {
     e.preventDefault();
     
     if (!user) {
-      // First register team
-      const teamSuccess = await registerTeam(teamName, email);
+      // Register team with a default name (using email prefix)
+      const defaultTeamName = email.split('@')[0] + '-team';
+      const teamSuccess = await registerTeam(defaultTeamName, email);
       if (!teamSuccess) return;
     }
     
-    // Then create client
-    const clientSuccess = await createClient(clientName || teamName, email, initialCash);
+    // Create client
+    const clientSuccess = await createClient(clientName, email, initialCash);
     if (clientSuccess) {
       setCurrentView('catalogue');
     }
@@ -52,18 +52,6 @@ export function AuthForm() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="teamName">Team/Company Name</Label>
-              <Input
-                id="teamName"
-                type="text"
-                value={teamName}
-                onChange={(e) => setTeamName(e.target.value)}
-                placeholder="Your team name"
-                required
-              />
-            </div>
-
-            <div>
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -76,13 +64,14 @@ export function AuthForm() {
             </div>
 
             <div>
-              <Label htmlFor="clientName">Your Name (Optional)</Label>
+              <Label htmlFor="clientName">Your Name</Label>
               <Input
                 id="clientName"
                 type="text"
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
-                placeholder="Leave blank to use team name"
+                placeholder="Enter your name"
+                required
               />
             </div>
 
@@ -97,6 +86,9 @@ export function AuthForm() {
                 step="100"
                 required
               />
+              <p className="text-xs text-gray-500 mt-1">
+                This represents your available investment funds
+              </p>
             </div>
 
             {error && (

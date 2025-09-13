@@ -11,7 +11,7 @@ import { ArrowLeft } from 'lucide-react';
 export function GoalSetup() {
   const { selectedGoal, setCurrentView, createGoalBasedInvestment, isLoading } = useAppStore();
   const [monthlyAmount, setMonthlyAmount] = useState(200);
-  const [targetMonths, setTargetMonths] = useState(24);
+  const [targetYears, setTargetYears] = useState(2);
 
   if (!selectedGoal) {
     setCurrentView('catalogue');
@@ -39,9 +39,31 @@ export function GoalSetup() {
     }
   };
 
+  // Enhanced projection calculation using compound interest
+  const calculateProjection = () => {
+    const annualRate = 0.07; // 7% annual return (more realistic for balanced portfolio)
+    const monthlyRate = annualRate / 12;
+    const totalMonths = targetYears * 12;
+    
+    // Future value of annuity formula: PMT * [((1 + r)^n - 1) / r]
+    const futureValue = monthlyAmount * (Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate;
+    const totalContributions = monthlyAmount * totalMonths;
+    const totalGrowth = futureValue - totalContributions;
+    
+    return {
+      totalContributions,
+      totalGrowth,
+      futureValue,
+      monthsToGoal: Math.ceil(selectedGoal.finalPrice / monthlyAmount) // Simple estimate
+    };
+  };
+
+  const projection = calculateProjection();
+  const willReachGoal = projection.futureValue >= selectedGoal.finalPrice;
+
   const handleCreateGoal = async () => {
     const targetDate = new Date();
-    targetDate.setMonth(targetDate.getMonth() + targetMonths);
+    targetDate.setFullYear(targetDate.getFullYear() + targetYears);
     
     const success = await createGoalBasedInvestment(
       selectedGoal.id,
@@ -104,35 +126,56 @@ export function GoalSetup() {
           </div>
 
           <div>
-            <Label htmlFor="targetMonths">Target Timeline (Months)</Label>
+            <Label htmlFor="targetYears">Investment Timeline (Years)</Label>
             <Input
-              id="targetMonths"
+              id="targetYears"
               type="number"
-              value={targetMonths}
-              onChange={(e) => setTargetMonths(Number(e.target.value))}
-              min="3"
-              max="120"
+              value={targetYears}
+              onChange={(e) => setTargetYears(Number(e.target.value))}
+              min="1"
+              max="30"
+              step="0.5"
             />
+            <p className="text-sm text-gray-500 mt-1">
+              How many years do you want to invest?
+            </p>
           </div>
 
-          {/* Simple Projection */}
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h3 className="font-semibold mb-2">Projection</h3>
-            <div className="space-y-1 text-sm">
+          {/* Enhanced Projection */}
+          <div className={`p-4 rounded-lg ${willReachGoal ? 'bg-green-50 border border-green-200' : 'bg-blue-50'}`}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold">Investment Projection</h3>
+              {willReachGoal && (
+                <span className="text-green-600 text-sm font-medium">✓ Goal Achievable!</span>
+              )}
+            </div>
+            <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span>Total contributions:</span>
-                <span>{formatCurrency(monthlyAmount * targetMonths)}</span>
+                <span className="font-medium">{formatCurrency(projection.totalContributions)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Estimated growth (6% annual):</span>
-                <span>{formatCurrency((monthlyAmount * targetMonths) * 0.06 * (targetMonths / 12))}</span>
+                <span>Estimated growth (7% annually):</span>
+                <span className="font-medium text-green-600">+{formatCurrency(projection.totalGrowth)}</span>
               </div>
-              <div className="flex justify-between font-semibold">
-                <span>Projected total:</span>
-                <span>{formatCurrency((monthlyAmount * targetMonths) * 1.06)}</span>
+              <div className="flex justify-between font-semibold text-base pt-2 border-t">
+                <span>Projected total in {targetYears} years:</span>
+                <span className="text-blue-600">{formatCurrency(projection.futureValue)}</span>
+              </div>
+              <div className="text-xs text-gray-500 pt-1">
+                * Assumes 7% annual return with monthly compounding
               </div>
             </div>
           </div>
+
+          {!willReachGoal && (
+            <div className="bg-orange-50 border border-orange-200 p-3 rounded-lg">
+              <p className="text-sm text-orange-800">
+                <strong>Tip:</strong> To reach your goal of {formatCurrency(selectedGoal.finalPrice)}, 
+                consider increasing your monthly investment or extending your timeline.
+              </p>
+            </div>
+          )}
 
           <Button 
             onClick={handleCreateGoal} 

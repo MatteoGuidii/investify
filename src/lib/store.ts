@@ -255,22 +255,28 @@ export const useAppStore = create<AppState>()(
 
           addUserGoal(userGoal);
 
-          // Run initial simulation to get projections
+          // Run enhanced simulation to get realistic projections
           try {
-            const simulationResponse = await apiService.simulateClientPortfolios(client.id, {
-              months: Math.min(12, Math.ceil((targetDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 30)))
-            });
+            const totalMonths = Math.ceil((targetDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 30));
+            const projectionResponse = await apiService.projectGoalCompletion(
+              client.id,
+              selectedGoal.finalPrice,
+              monthlyContribution,
+              totalMonths
+            );
 
-            if (simulationResponse.success && simulationResponse.data?.results?.length) {
-              const result = simulationResponse.data.results.find(r => r.portfolioId === portfolio.id);
-              if (result) {
-                // Update goal with simulation data
-                const updatedGoal = { ...userGoal, lastSimulation: result };
-                addUserGoal(updatedGoal);
-              }
+            if (projectionResponse.success && projectionResponse.data) {
+              const projection = projectionResponse.data;
+              // Update goal with enhanced projection data
+              const updatedGoal = { 
+                ...userGoal, 
+                enhancedProjection: projection,
+                projectedCompletion: new Date(Date.now() + (projection.months * 30 * 24 * 60 * 60 * 1000))
+              };
+              addUserGoal(updatedGoal);
             }
           } catch (error) {
-            console.warn('Simulation failed, but portfolio was created:', error);
+            console.warn('Enhanced projection failed, but portfolio was created:', error);
           }
 
           return true;

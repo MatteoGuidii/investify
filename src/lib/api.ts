@@ -224,55 +224,125 @@ class APIService {
   async projectGoalCompletion(
     clientId: string,
     targetAmount: number,
-    monthlyContribution: number
-  ): Promise<APIResponse<{ months: number; projectedValue: number; confidence: number }>> {
-    // Calculate estimated months needed
-    const estimatedMonths = Math.ceil(targetAmount / monthlyContribution);
+    monthlyContribution: number,
+    totalMonths: number
+  ): Promise<APIResponse<{ 
+    months: number; 
+    projectedValue: number; 
+    confidence: number;
+    yearByYearBreakdown: Array<{year: number, value: number, contributions: number, growth: number}>;
+  }>> {
     
-    // Cap at 12 months for simulation (API limit)
-    const simulationMonths = Math.min(estimatedMonths, 12);
-    
-    // Run simulation to get actual projections
-    const simulationResult = await this.simulateClientPortfolios(clientId, {
-      months: simulationMonths,
-    });
+    try {
+      // Use API simulation for first 12 months to get realistic growth patterns
+      const simulationResult = await this.simulateClientPortfolios(clientId, {
+        months: 12,
+      });
 
-    if (!simulationResult.success || !simulationResult.data?.results?.length) {
-      // Fallback calculation
-      const projectedValue = monthlyContribution * estimatedMonths * 1.06; // 6% annual growth estimate
+      let firstYearGrowthRate = 0.07; // Default 7% annual
+      let baselineProjection = 0;
+      let confidence = 80;
+
+      if (simulationResult.success && simulationResult.data?.results?.length) {
+        const result = simulationResult.data.results[0];
+        // Calculate annual growth rate from API simulation
+        const annualGrowthFromSim = (result.projectedValue / result.initialValue) - 1;
+        firstYearGrowthRate = Math.max(0.04, Math.min(0.12, annualGrowthFromSim)); // Cap between 4-12%
+        baselineProjection = result.projectedValue;
+        confidence = 90;
+      }
+
+      // For longer periods, use mathematical projection with compound interest
+      const yearByYearBreakdown = [];
+      let currentValue = monthlyContribution; // Starting with first month's contribution
+      const monthlyGrowthRate = firstYearGrowthRate / 12;
+      
+      // Calculate year by year using Future Value of Annuity formula
+      for (let year = 1; year <= Math.ceil(totalMonths / 12); year++) {
+        const monthsThisYear = Math.min(12, totalMonths - (year - 1) * 12);
+        
+        if (monthsThisYear <= 0) break;
+        
+        const contributionsThisYear = monthlyContribution * monthsThisYear;
+        
+        if (year === 1 && baselineProjection > 0) {
+          // Use API projection for first year
+          currentValue = baselineProjection;
+        } else {
+          // Mathematical projection for subsequent years
+          // Future value of annuity: PMT * [((1 + r)^n - 1) / r]
+          const periodContributions = monthlyContribution * monthsThisYear;
+          const growthOnNewContributions = periodContributions * (Math.pow(1 + monthlyGrowthRate, monthsThisYear) - 1) / monthlyGrowthRate;
+          const growthOnExistingValue = currentValue * Math.pow(1 + monthlyGrowthRate, monthsThisYear);
+          
+          const newValue = growthOnExistingValue + growthOnNewContributions;
+          const growthThisYear = newValue - currentValue - contributionsThisYear;
+          
+          yearByYearBreakdown.push({
+            year,
+            value: newValue,
+            contributions: contributionsThisYear,
+            growth: growthThisYear
+          });
+          
+          currentValue = newValue;
+        }
+        
+        if (year === 1) {
+          yearByYearBreakdown.push({
+            year: 1,
+            value: currentValue,
+            contributions: contributionsThisYear,
+            growth: currentValue - contributionsThisYear
+          });
+        }
+      }
+
       return {
         data: {
-          months: estimatedMonths,
-          projectedValue,
-          confidence: 70,
+          months: totalMonths,
+          projectedValue: currentValue,
+          confidence,
+          yearByYearBreakdown
+        },
+        success: true,
+      };
+
+    } catch {
+      // Fallback to pure mathematical calculation
+      const annualRate = 0.07;
+      const monthlyRate = annualRate / 12;
+      
+      // Future value of annuity formula
+      const futureValue = monthlyContribution * (Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate;
+      
+      const yearByYearBreakdown = [];
+      for (let year = 1; year <= Math.ceil(totalMonths / 12); year++) {
+        const monthsForYear = Math.min(12, totalMonths - (year - 1) * 12);
+        if (monthsForYear <= 0) break;
+        
+        const monthsUpToYear = Math.min(year * 12, totalMonths);
+        const valueAtYear = monthlyContribution * (Math.pow(1 + monthlyRate, monthsUpToYear) - 1) / monthlyRate;
+        const contributionsUpToYear = monthlyContribution * monthsUpToYear;
+        
+        yearByYearBreakdown.push({
+          year,
+          value: valueAtYear,
+          contributions: monthlyContribution * monthsForYear,
+          growth: valueAtYear - contributionsUpToYear
+        });
+      }
+      
+      return {
+        data: {
+          months: totalMonths,
+          projectedValue: futureValue,
+          confidence: 75,
+          yearByYearBreakdown
         },
         success: true,
       };
     }
-
-    const result = simulationResult.data.results[0];
-    const monthlyGrowthRate = Math.pow(result.projectedValue / result.initialValue, 1 / result.monthsSimulated) - 1;
-    
-    // Extrapolate to target amount if needed
-    const projectedMonths = estimatedMonths;
-    let projectedValue = result.projectedValue;
-    
-    if (simulationMonths < estimatedMonths) {
-      // Extrapolate beyond simulation period
-      const remainingMonths = estimatedMonths - simulationMonths;
-      const additionalContributions = monthlyContribution * remainingMonths;
-      const compoundedGrowth = Math.pow(1 + monthlyGrowthRate, remainingMonths);
-      projectedValue = (result.projectedValue + additionalContributions) * compoundedGrowth;
-    }
-
-    return {
-      data: {
-        months: projectedMonths,
-        projectedValue,
-        confidence: 85,
-      },
-      success: true,
-    };
   }
 }
 
