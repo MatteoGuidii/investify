@@ -26,11 +26,13 @@ export function Dashboard() {
 
     setLoading(true);
     try {
+      // Get client data
       const clientResponse = await apiService.getClient(currentClient.id);
       if (clientResponse.success && clientResponse.data) {
         setClientCash(clientResponse.data.cash);
       }
 
+      // Get portfolios
       const portfolioResponse = await apiService.getClientPortfolios(currentClient.id);
       if (portfolioResponse.success && portfolioResponse.data) {
         setPortfolios(portfolioResponse.data);
@@ -77,6 +79,7 @@ export function Dashboard() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
@@ -84,7 +87,7 @@ export function Dashboard() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={loadData} disabled={isLoading}>
-            <RefreshCw className={isLoading ? 'w-4 h-4 mr-2 animate-spin' : 'w-4 h-4 mr-2'} />
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
           <Button onClick={() => setCurrentView('catalogue')}>
@@ -94,6 +97,7 @@ export function Dashboard() {
         </div>
       </div>
 
+      {/* Account Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card>
           <CardHeader className="pb-2">
@@ -132,6 +136,7 @@ export function Dashboard() {
         </Card>
       </div>
 
+      {/* Goals */}
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Your Goals</h2>
         
@@ -149,14 +154,14 @@ export function Dashboard() {
           </Card>
         ) : (
           <div className="grid gap-4">
-            {userGoals.map((userGoal) => {
+            {userGoals.map((userGoal, index) => {
               const portfolio = portfolios.find(p => p.id === userGoal.portfolioId);
               const progress = portfolio 
                 ? Math.round((portfolio.current_value / userGoal.targetAmount) * 100)
                 : userGoal.progressPercent;
 
               return (
-                <Card key={userGoal.id}>
+                <Card key={`${userGoal.id}-${userGoal.goalId}-${index}`}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
