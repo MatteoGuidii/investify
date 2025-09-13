@@ -338,53 +338,6 @@ export function GoalSetup() {
     }
   };
 
-  // Enhanced projection calculation using compound interest
-  const calculateProjection = () => {
-    const annualRate = 0.07; // 7% annual return (more realistic for balanced portfolio)
-    const monthlyRate = annualRate / 12;
-    const totalMonths = targetYears * 12;
-    
-    // Future value of annuity formula: PMT * [((1 + r)^n - 1) / r]
-    const futureValue = monthlyAmount * (Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate;
-    const totalContributions = monthlyAmount * totalMonths;
-    const totalGrowth = futureValue - totalContributions;
-    
-    return {
-      totalContributions,
-      totalGrowth,
-      futureValue,
-      monthsToGoal: Math.ceil(selectedGoal.finalPrice / monthlyAmount) // Simple estimate
-    };
-  };
-
-  const projection = calculateProjection();
-  const willReachGoal = projection.futureValue >= selectedGoal.finalPrice;
-
-  const handleCreateGoal = async () => {
-    try {
-      const targetDate = new Date();
-      targetDate.setFullYear(targetDate.getFullYear() + targetYears);
-      
-      const success = await createGoalBasedInvestment(
-        selectedGoal.id,
-        monthlyAmount,
-        targetDate
-      );
-      
-      if (success) {
-        setCurrentView('dashboard'); // Go to dashboard to see the created goal
-      } else {
-        // Even if API fails, show dashboard for demo purposes
-        console.log('API call failed, but proceeding to dashboard for demo');
-        setCurrentView('dashboard');
-      }
-    } catch (error) {
-      console.error('Error creating goal:', error);
-      // Still proceed to dashboard for demo purposes
-      setCurrentView('dashboard');
-    }
-  };
-
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <Button variant="ghost" onClick={() => setCurrentView('catalogue')} className="mb-6">

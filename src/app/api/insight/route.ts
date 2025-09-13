@@ -69,7 +69,13 @@ export async function GET(request: Request) {
     if (!MARTIAN_API_KEY) {
       console.warn('MARTIAN_API_KEY not configured, using fallback suggestion');
       const suggestion = fallbackSuggestions[Math.floor(Math.random() * fallbackSuggestions.length)];
-      return NextResponse.json({ suggestion, chartData });
+      return NextResponse.json({ suggestion, chartData, source: 'no_api_key' });
+    }
+
+    if (!MARTIAN_API_KEY.startsWith('mk-') && !MARTIAN_API_KEY.startsWith('sk-')) {
+      console.warn('MARTIAN_API_KEY appears to be invalid format, using fallback suggestion');
+      const suggestion = fallbackSuggestions[Math.floor(Math.random() * fallbackSuggestions.length)];
+      return NextResponse.json({ suggestion, chartData, source: 'invalid_api_key' });
     }
 
     const prompt = `You are a friendly financial coach for a student named ${mockData.profile.name}.
@@ -98,6 +104,8 @@ Tasks:
 Example format: "I noticed [trend] 📊 [Specific action] and you'll [specific benefit] 🎯"`;
 
     console.log('Attempting to call Martian API...');
+    console.log('API URL:', 'https://api.withmartian.com/v1/openai/chat/completions');
+    console.log('Model:', 'gpt-4o-mini');
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
@@ -124,21 +132,30 @@ Example format: "I noticed [trend] 📊 [Specific action] and you'll [specific b
 
     clearTimeout(timeoutId);
 
+    console.log('Martian API response status:', response.status);
+    console.log('Martian API response headers:', Object.fromEntries(response.headers.entries()));
+
     if (!response.ok) {
       if (response.status === 429) {
         console.warn('Rate limited by Martian API, using fallback suggestion');
-        const suggestion = fallbackSuggestions[Math.floor(Math.random() * fallbackSuggestions.length)];
-        
-        // Cache the fallback suggestion for a shorter time
-        insightCache = {
-          suggestion,
-          chartData,
-          timestamp: Date.now()
-        };
-        
-        return NextResponse.json({ suggestion, chartData });
+      } else if (response.status === 404) {
+        console.warn('Martian API endpoint not found (404), using fallback suggestion');
+      } else if (response.status >= 500) {
+        console.warn(`Martian API server error (${response.status}), using fallback suggestion`);
+      } else {
+        console.warn(`Martian API error (${response.status}), using fallback suggestion`);
       }
-      throw new Error(`Martian API error: ${response.status}`);
+      
+      const suggestion = fallbackSuggestions[Math.floor(Math.random() * fallbackSuggestions.length)];
+      
+      // Cache the fallback suggestion for a shorter time
+      insightCache = {
+        suggestion,
+        chartData,
+        timestamp: Date.now()
+      };
+      
+      return NextResponse.json({ suggestion, chartData, source: 'fallback_api_error' });
     }
 
     const data = await response.json();
