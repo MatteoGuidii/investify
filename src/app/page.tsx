@@ -5,6 +5,7 @@ import { useAppStore } from '@/lib/store';
 import { GoalCatalogue } from '@/components/goal-catalogue';
 import { GoalSetup } from '@/components/goal-setup';
 import { Dashboard } from '@/components/dashboard';
+import { Rewards } from '@/components/rewards';
 import { Header } from '@/components/header';
 import { AuthForm } from '@/components/auth-form';
 
@@ -25,6 +26,8 @@ export default function Home() {
         return <GoalSetup />;
       case 'dashboard':
         return <Dashboard />;
+      case 'rewards':
+        return <Rewards />;
       default:
         return <AuthForm />;
     }

@@ -38,8 +38,9 @@ export function Header() {
             </Button>
             <Button
               variant="ghost"
+              onClick={() => setCurrentView('rewards')}
               size="sm"
-              className="text-white hover:bg-white/20 px-4 py-2 rounded-md"
+              className={`${currentView === 'rewards' ? 'bg-white text-rbc-blue' : 'text-white hover:bg-white/20'} px-4 py-2 rounded-md`}
             >
               Rewards
             </Button>

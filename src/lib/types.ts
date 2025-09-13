@@ -179,3 +179,51 @@ export interface MarketPerformance {
   allTime: number;
   lastUpdated: Date;
 }
+
+// Rewards & Engagement types
+export interface AvionPoints {
+  total: number;
+  description: string;
+}
+
+export interface InvestmentStreak {
+  months: number;
+  currentProgress: number;
+  nextMilestone: number;
+  completionPercent: number;
+}
+
+export interface Discount {
+  id: string;
+  title: string;
+  provider: string;
+  discountText: string;
+  expiryDate: string;
+  category: 'travel' | 'tech' | 'lifestyle' | 'shopping';
+  logo?: string;
+}
+
+export interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  progress: number;
+  completionPercent: number;
+  reward: string;
+  icon: string;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  name: string;
+  points: number;
+  isCurrentUser: boolean;
+}
+
+export interface RewardsData {
+  avionPoints: AvionPoints;
+  investmentStreak: InvestmentStreak;
+  discounts: Discount[];
+  challenges: Challenge[];
+  leaderboard: LeaderboardEntry[];
+}

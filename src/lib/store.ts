@@ -17,7 +17,7 @@ interface AppState {
   
   // UI state
   isLoading: boolean;
-  currentView: 'auth' | 'catalogue' | 'setup' | 'dashboard';
+  currentView: 'auth' | 'catalogue' | 'setup' | 'dashboard' | 'rewards';
   error: string | null;
   
   // Actions
