@@ -35,11 +35,16 @@ export function GoalCatalogue() {
         return "🏠";
       case "experience":
         return "🎵";
-      case "lifestyle":
+      case "clothing":
         return "💰";
       default:
         return "🎯";
     }
+  };
+
+  const getCategoryLabel = (category: string) => {
+    if (category === "experience") return "Musical Instrument";
+    return category;
   };
 
   return (
@@ -104,7 +109,7 @@ export function GoalCatalogue() {
             {GOAL_CATALOGUE.map((goal, index) => (
               <div
                 key={goal.id}
-                className="neo-card p-5 hover:scale-[1.02] transition-all duration-300 group cursor-pointer flex flex-col h-full"
+                className="neo-card p-5 hover:translate-y-[-2px] hover:shadow-lg/30 transition-all duration-300 group cursor-pointer flex flex-col h-full border border-white/5"
                 onClick={() => handleSelectGoal(goal)}
               >
                 {/* Goal Image */}
@@ -140,44 +145,47 @@ export function GoalCatalogue() {
                 </div>
 
                 {/* Content - flex-grow to push button to bottom */}
-                <div className="flex flex-col flex-grow space-y-3">
-                  <div>
-                    <h3 className="text-lg font-semibold text-white mb-1">
+                <div className="flex flex-col flex-grow space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-2 py-0.5 rounded-md text-[10px] tracking-wide uppercase bg-white/5 text-gray-300 border border-white/10">
+                        {getCategoryLabel(goal.category)}
+                      </span>
+                    </div>
+                    <h3 className="text-xl font-semibold text-white leading-snug">
                       {goal.title}
                     </h3>
-                    <p className="text-gray-400 text-xs leading-relaxed">
+                    <p className="text-gray-400 text-xs leading-relaxed line-clamp-3">
                       {goal.description}
                     </p>
                   </div>
 
-                  {/* Stats */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center p-2.5 neo-glass rounded-lg">
-                      <span className="text-xs text-gray-400">
-                        Target Amount
-                      </span>
-                      <span className="font-semibold text-green-400 text-sm">
-                        {formatCurrency(goal.finalPrice)}
-                      </span>
+                  {/* Stats + CTA grouped for consistent bottom spacing */}
+                  <div className="mt-auto">
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div className="neo-glass rounded-lg p-2.5 flex flex-col">
+                        <span className="text-[10px] tracking-wide text-gray-400 uppercase">
+                          Target
+                        </span>
+                        <span className="mt-1 text-sm font-semibold text-green-400 leading-none">
+                          {formatCurrency(goal.finalPrice)}
+                        </span>
+                      </div>
+                      <div className="neo-glass rounded-lg p-2.5 flex flex-col">
+                        <span className="text-[10px] tracking-wide text-gray-400 uppercase">
+                          From / mo
+                        </span>
+                        <span className="mt-1 text-sm font-medium text-white leading-none">
+                          {formatCurrency(goal.minMonthlyInvestment)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center p-2.5 neo-glass rounded-lg">
-                      <span className="text-xs text-gray-400">
-                        From per month
-                      </span>
-                      <span className="text-white font-medium text-xs">
-                        {formatCurrency(goal.minMonthlyInvestment)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* CTA Button - pushed to bottom with mt-auto */}
-                  <div className="pt-3 mt-auto">
                     <Button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleSelectGoal(goal);
                       }}
-                      className="w-full neo-button text-xs font-medium group-hover:scale-105 transition-transform py-3 h-10"
+                      className="w-full neo-button text-xs font-medium group-hover:scale-[1.03] transition-transform py-3 h-10"
                     >
                       Select Goal
                     </Button>

@@ -87,7 +87,7 @@ export interface MultipleSimulationResponse {
 export interface Goal {
   id: string;
   title: string;
-  category: 'travel' | 'education' | 'home' | 'car' | 'tech' | 'experience' | 'lifestyle';
+  category: 'travel' | 'education' | 'home' | 'car' | 'tech' | 'experience' | 'clothing';
   description: string;
   basePrice: number;
   discountPercent: number;
@@ -199,7 +199,7 @@ export interface Discount {
   provider: string;
   discountText: string;
   expiryDate: string;
-  category: 'travel' | 'tech' | 'lifestyle' | 'shopping';
+  category: 'travel' | 'tech' | 'clothing' | 'shopping';
   logo?: string;
 }
 

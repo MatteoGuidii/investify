@@ -1,60 +1,85 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { X, Share2, Download, Calendar, Target, TrendingUp, Users, Award, BarChart3, Trophy } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { format, parseISO } from 'date-fns';
-import { Kpi } from './Kpi';
-import { EpicWrapSlideOverProps } from '@/lib/wrap/types';
+import { motion } from "framer-motion";
+import {
+  X,
+  Share2,
+  Download,
+  Calendar,
+  Target,
+  TrendingUp,
+  Users,
+  Award,
+  BarChart3,
+  Trophy,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { format, parseISO } from "date-fns";
+import { Kpi } from "./Kpi";
+import { EpicWrapSlideOverProps } from "@/lib/wrap/types";
 
 export function EpicWrapSlideOver({
   wrap,
   isOpen,
   onClose,
   onShare,
-  onDownload
+  onDownload,
 }: EpicWrapSlideOverProps) {
   const { periodLabel, userFirstName, kpis, timeline, highlights } = wrap;
 
   // Transform timeline data for the larger chart
-  const chartData = timeline.map(point => ({
+  const chartData = timeline.map((point) => ({
     ...point,
     date: parseISO(point.date),
-    formattedDate: format(parseISO(point.date), 'MMM dd'),
-    formattedValue: new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    formattedDate: format(parseISO(point.date), "MMM dd"),
+    formattedValue: new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(point.portfolioValue)
+      maximumFractionDigits: 0,
+    }).format(point.portfolioValue),
   }));
 
   // Calculate chart domain
-  const values = timeline.map(p => p.portfolioValue);
+  const values = timeline.map((p) => p.portfolioValue);
   const minValue = Math.min(...values);
   const maxValue = Math.max(...values);
   const padding = (maxValue - minValue) * 0.1;
   const yDomain = [Math.max(0, minValue - padding), maxValue + padding];
 
-  const isPositiveTrend = timeline[timeline.length - 1].portfolioValue > timeline[0].portfolioValue;
+  const isPositiveTrend =
+    timeline[timeline.length - 1].portfolioValue > timeline[0].portfolioValue;
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(value);
   };
 
   const formatPercent = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'percent',
+    return new Intl.NumberFormat("en-US", {
+      style: "percent",
       minimumFractionDigits: 1,
-      maximumFractionDigits: 1
+      maximumFractionDigits: 1,
     }).format(value / 100);
   };
 
@@ -76,15 +101,15 @@ export function EpicWrapSlideOver({
   };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Escape') {
+    if (event.key === "Escape") {
       onClose();
     }
   };
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent 
-        side="right" 
+      <SheetContent
+        side="right"
         className="w-full sm:max-w-2xl overflow-y-auto"
         onKeyDown={handleKeyDown}
       >
@@ -139,7 +164,7 @@ export function EpicWrapSlideOver({
                 Your 2025 Summary
               </h2>
             </div>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-4 border border-green-200 dark:border-green-700/50">
                 <div className="text-2xl font-bold text-green-600 dark:text-green-400">
@@ -211,45 +236,56 @@ export function EpicWrapSlideOver({
                 Performance Overview
               </h2>
             </div>
-            
+
             <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData}>
                     <defs>
-                      <linearGradient id="portfolioGradientLarge" x1="0" y1="0" x2="0" y2="1">
-                        <stop 
-                          offset="5%" 
-                          stopColor={isPositiveTrend ? "#3b82f6" : "#ef4444"} 
+                      <linearGradient
+                        id="portfolioGradientLarge"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="5%"
+                          stopColor={isPositiveTrend ? "#3b82f6" : "#ef4444"}
                           stopOpacity={0.3}
                         />
-                        <stop 
-                          offset="95%" 
-                          stopColor={isPositiveTrend ? "#3b82f6" : "#ef4444"} 
+                        <stop
+                          offset="95%"
+                          stopColor={isPositiveTrend ? "#3b82f6" : "#ef4444"}
                           stopOpacity={0.05}
                         />
                       </linearGradient>
                     </defs>
-                    
-                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                    
-                    <XAxis 
+
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="opacity-30"
+                    />
+
+                    <XAxis
                       dataKey="date"
                       type="number"
                       scale="time"
-                      domain={['dataMin', 'dataMax']}
-                      tickFormatter={(value) => format(new Date(value), 'MMM')}
+                      domain={["dataMin", "dataMax"]}
+                      tickFormatter={(value) => format(new Date(value), "MMM")}
                       className="text-xs"
                     />
-                    
-                    <YAxis 
+
+                    <YAxis
                       domain={yDomain}
-                      tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                      tickFormatter={(value) =>
+                        `$${(value / 1000).toFixed(0)}k`
+                      }
                       className="text-xs"
                     />
-                    
+
                     <Tooltip content={<CustomTooltip />} />
-                    
+
                     <Area
                       type="monotone"
                       dataKey="portfolioValue"
@@ -257,11 +293,11 @@ export function EpicWrapSlideOver({
                       strokeWidth={3}
                       fill="url(#portfolioGradientLarge)"
                       dot={false}
-                      activeDot={{ 
-                        r: 4, 
+                      activeDot={{
+                        r: 4,
                         fill: isPositiveTrend ? "#3b82f6" : "#ef4444",
                         stroke: "#fff",
-                        strokeWidth: 2
+                        strokeWidth: 2,
                       }}
                     />
                   </AreaChart>
@@ -282,7 +318,7 @@ export function EpicWrapSlideOver({
                 Key Metrics
               </h2>
             </div>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <Kpi
                 label="Total Invested"
@@ -299,7 +335,7 @@ export function EpicWrapSlideOver({
               <Kpi
                 label="Roboadvisor Return"
                 value={`${formatCurrency(kpis.roboAdvisorReturnAbs)} (${formatPercent(kpis.roboAdvisorReturnPct)})`}
-                trend={kpis.roboAdvisorReturnAbs > 0 ? 'up' : 'down'}
+                trend={kpis.roboAdvisorReturnAbs > 0 ? "up" : "down"}
                 hint="Absolute and percentage return generated"
                 testId="detail-kpi-return"
               />
@@ -330,7 +366,7 @@ export function EpicWrapSlideOver({
               <Kpi
                 label="Goals Achieved"
                 value={`${kpis.goalsAchieved} goals`}
-                trend={kpis.goalsAchieved > 0 ? 'up' : null}
+                trend={kpis.goalsAchieved > 0 ? "up" : null}
                 hint="Financial goals completed this period"
                 testId="detail-kpi-goals"
               />
@@ -362,14 +398,14 @@ export function EpicWrapSlideOver({
                 Highlights
               </h2>
             </div>
-            
+
             <div className="space-y-3">
               {highlights.map((highlight, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 + (index * 0.1) }}
+                  transition={{ delay: 0.4 + index * 0.1 }}
                   className="flex items-start space-x-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg"
                 >
                   <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0" />
@@ -393,16 +429,19 @@ export function EpicWrapSlideOver({
             </h2>
             <div className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
               <p>
-                <strong>Returns:</strong> Time-weighted returns calculated using daily portfolio valuations, 
-                net of fees and adjusted for deposits and withdrawals.
+                <strong>Returns:</strong> Time-weighted returns calculated using
+                daily portfolio valuations, net of fees and adjusted for
+                deposits and withdrawals.
               </p>
               <p>
-                <strong>Diversification Score:</strong> Measures portfolio balance across asset classes, 
-                sectors, and geographic regions on a scale of 0-100.
+                <strong>Diversification Score:</strong> Measures portfolio
+                balance across asset classes, sectors, and geographic regions on
+                a scale of 0-100.
               </p>
               <p>
-                <strong>Fees Avoided:</strong> Estimated based on typical brokerage commissions and 
-                management fees for similar investment amounts.
+                <strong>Fees Avoided:</strong> Estimated based on typical
+                brokerage commissions and management fees for similar investment
+                amounts.
               </p>
             </div>
           </motion.section>

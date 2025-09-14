@@ -21,7 +21,7 @@ export function getMockWrap(): EpicWrap {
   }
 
   return {
-    periodLabel: "Your 2025 Wrap",
+  periodLabel: "Your 2025 Wrapped",
     userFirstName: "Lenn",
     kpis: {
       totalInvested: 12450,
@@ -59,7 +59,7 @@ export function getMockWrap(): EpicWrap {
 
 // Static example for testing/development
 export const MOCK_WRAP_EXAMPLE: EpicWrap = {
-  "periodLabel": "Your 2025 Wrap",
+  "periodLabel": "Your 2025 Wrapped",
   "userFirstName": "Lenn",
   "kpis": {
     "totalInvested": 12450,
