@@ -1,11 +1,19 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Bot, X, TrendingUp, Sparkles, Zap } from "lucide-react";
+import { Bot, Sparkles, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface AiCoachProps {
   className?: string;
+}
+
+interface ChartData {
+  currentAmount: number;
+  targetAmount: number;
+  currentMonthlyContribution: number;
+  suggestedSaving: number;
+  goalName: string;
 }
 
 // Function to format suggestion text with consistent green styling
@@ -34,16 +42,20 @@ const formatSuggestionText = (text: string) => {
 
 export function AiCoach({ className = "" }: AiCoachProps) {
   const [suggestion, setSuggestion] = useState<string>("");
-  const [chartData, setChartData] = useState<any>(null);
+  const [chartData, setChartData] = useState<ChartData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestion, setShowSuggestion] = useState(false);
   const [hasSuggestion, setHasSuggestion] = useState(false);
   const [error, setError] = useState<string>("");
   const [hasInitialized, setHasInitialized] = useState(false);
-  const [isThinking, setIsThinking] = useState(false);
   const [hasConsent, setHasConsent] = useState<boolean | null>(null);
-  const [showWelcome, setShowWelcome] = useState(false);
   const [showConsent, setShowConsent] = useState(false);
+  const [isFirstVisit, setIsFirstVisit] = useState(false);
+  const [showInitialGreeting, setShowInitialGreeting] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
+
+  // DEBUG: To test first-time behavior, run this in browser console:
+  // localStorage.removeItem('aiCoachVisited'); localStorage.removeItem('aiCoachConsent'); location.reload();
 
   const fetchInsight = useCallback(async () => {
     if (isLoading) return;
@@ -80,12 +92,20 @@ export function AiCoach({ className = "" }: AiCoachProps) {
   }, [isLoading, hasConsent]);
 
   const handleIconClick = () => {
+    // If showing initial greeting, let user interact with it
+    if (showInitialGreeting) {
+      return;
+    }
+
+    // For returning users or after initial setup
     if (hasConsent === null) {
       setShowSuggestion(true);
+      setShowConsent(true);
       return;
     }
     if (hasConsent === false) {
       setShowSuggestion(true);
+      setShowConsent(true);
       return;
     }
     if (!showSuggestion && !suggestion && !isLoading) {
@@ -97,37 +117,55 @@ export function AiCoach({ className = "" }: AiCoachProps) {
 
   const closeSuggestion = () => {
     setShowSuggestion(false);
+    setShowInitialGreeting(false);
+    setShowConsent(false);
   };
 
   // Initialize with first insight fetch on component mount
-  // Load consent preference
+  // Load consent preference and check for first visit
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
     try {
       const stored = localStorage.getItem("aiCoachConsent");
+      const hasVisited = localStorage.getItem("aiCoachVisited");
+      
       if (stored === "granted") setHasConsent(true);
       else if (stored === "declined") setHasConsent(false);
+      
+      // If user has never seen the AI coach, show initial greeting
+      if (!hasVisited) {
+        setIsFirstVisit(true);
+        localStorage.setItem("aiCoachVisited", "true");
+        // Show greeting immediately on first visit
+        timeoutId = setTimeout(() => {
+          setShowInitialGreeting(true);
+          setShowSuggestion(true);
+        }, 1000); // Small delay for better UX
+      }
     } catch {
       /* ignore */
     }
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, []);
 
-  // Orchestrate welcome -> consent -> insight
+  // Show initial greeting only on first visit
   useEffect(() => {
-    if (!hasInitialized) {
-      setShowSuggestion(true); // ensure container visible
-      setShowWelcome(true);
-      const welcomeTimer = setTimeout(() => {
-        setShowWelcome(false);
-        if (hasConsent === null) {
-          setShowConsent(true);
-        } else if (hasConsent === true) {
-          fetchInsight();
-        }
-        setHasInitialized(true);
-      }, 2200);
-      return () => clearTimeout(welcomeTimer);
+    if (isFirstVisit && !hasInitialized) {
+      setHasInitialized(true);
     }
-  }, [hasInitialized, hasConsent, fetchInsight]);
+  }, [isFirstVisit, hasInitialized]);
+
+  // Original orchestration for returning users
+  useEffect(() => {
+    if (!isFirstVisit && !hasInitialized) {
+      // For returning users, don't auto-open - only show if they click
+      setHasInitialized(true);
+    }
+  }, [isFirstVisit, hasInitialized]);
 
   // Fetch after user grants consent while consent screen is open
   useEffect(() => {
@@ -144,8 +182,11 @@ export function AiCoach({ className = "" }: AiCoachProps) {
     } catch {
       /* ignore */
     }
+    setShowInitialGreeting(false);
+    setShowConsent(false);
     if (!suggestion) fetchInsight();
   };
+  
   const declineConsent = () => {
     setHasConsent(false);
     try {
@@ -153,7 +194,9 @@ export function AiCoach({ className = "" }: AiCoachProps) {
     } catch {
       /* ignore */
     }
+    setShowInitialGreeting(false);
     setShowConsent(false);
+    setShowSuggestion(false);
   };
 
   return (
@@ -312,7 +355,7 @@ export function AiCoach({ className = "" }: AiCoachProps) {
       <AnimatePresence>
         {showSuggestion && (
           <motion.div
-            className="fixed bottom-20 right-4 left-4 sm:left-auto sm:right-4 z-40 w-full sm:max-w-sm max-h-[70vh] overflow-y-auto"
+            className="fixed bottom-24 right-24 left-4 sm:left-auto sm:right-24 z-40 w-full sm:max-w-sm max-h-[70vh] overflow-y-auto"
             initial={{ opacity: 0, x: 100, y: 20 }}
             animate={{ opacity: 1, x: 0, y: 0 }}
             exit={{ opacity: 0, x: 100, y: 20 }}
@@ -327,13 +370,7 @@ export function AiCoach({ className = "" }: AiCoachProps) {
               {/* Gradient background overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-purple-900/3 via-indigo-800/3 to-blue-900/3"></div>
 
-              {/* Close button */}
-              <button
-                onClick={closeSuggestion}
-                className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 transition-colors z-10"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              {/* Close button removed per spec (user can dismiss via Got it! or toggling icon) */}
 
               {/* Header */}
               <div className="relative z-10 mb-3">
@@ -345,7 +382,7 @@ export function AiCoach({ className = "" }: AiCoachProps) {
 
               {/* Content */}
               <div className="relative z-10">
-                {showWelcome ? (
+                {showInitialGreeting ? (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -353,27 +390,22 @@ export function AiCoach({ className = "" }: AiCoachProps) {
                   >
                     <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
                       <p className="text-gray-800 text-sm leading-relaxed">
-                        Hi! 👋 I'm your AI financial coach. Let's get started.
+                        Hi! 👋 I&apos;m your AI financial coach. Would you like me to provide personalized insights to help with your goals?
                       </p>
                     </div>
-                    <div className="flex justify-center mt-2">
-                      <div className="flex space-x-1">
-                        {[0, 1, 2].map((i) => (
-                          <motion.div
-                            key={i}
-                            className="w-2 h-2 bg-purple-400 rounded-full"
-                            animate={{
-                              scale: [1, 1.2, 1],
-                              opacity: [0.7, 1, 0.7],
-                            }}
-                            transition={{
-                              duration: 0.8,
-                              repeat: Infinity,
-                              delay: i * 0.2,
-                            }}
-                          />
-                        ))}
-                      </div>
+                    <div className="flex gap-2 pt-3">
+                      <button
+                        onClick={grantConsent}
+                        className="flex-1 px-3 py-2 bg-gradient-to-r from-purple-600 to-indigo-700 text-white text-xs rounded-lg hover:from-purple-700 hover:to-indigo-800 transition-all duration-300 flex items-center justify-center gap-1 shadow-md"
+                      >
+                        <Sparkles className="w-3 h-3" /> Yes, help me!
+                      </button>
+                      <button
+                        onClick={declineConsent}
+                        className="px-3 py-2 bg-gray-100 text-gray-700 text-xs rounded-lg hover:bg-gray-200 transition-colors border border-gray-200"
+                      >
+                        No thanks
+                      </button>
                     </div>
                   </motion.div>
                 ) : showConsent ? (
@@ -555,7 +587,7 @@ export function AiCoach({ className = "" }: AiCoachProps) {
                                 <p className="text-gray-500 text-xs">
                                   With +${chartData.suggestedSaving}/month
                                 </p>
-                                <p className="text-green-600 text-sm font-semibold">
+                                <p className="text-purple-600 text-sm font-semibold">
                                   {Math.ceil(
                                     (chartData.targetAmount -
                                       chartData.currentAmount) /
@@ -567,7 +599,7 @@ export function AiCoach({ className = "" }: AiCoachProps) {
                               </div>
                             </div>
                             <div className="text-center">
-                              <p className="text-green-600 text-xs font-medium">
+                              <p className="text-purple-600 text-xs font-medium">
                                 Save{" "}
                                 {Math.ceil(
                                   (chartData.targetAmount -
