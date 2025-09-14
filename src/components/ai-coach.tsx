@@ -326,7 +326,7 @@ export function AiCoach({ className = '', anchorRect, colorful = false }: AiCoac
       <AnimatePresence>
   {(showSuggestion || showWelcome) && (
           <motion.div
-            className="fixed z-40 left-4 right-4 sm:left-auto sm:right-6 sm:w-96 sm:max-w-sm"
+            className={`fixed z-40 left-4 right-4 sm:left-auto sm:right-6 sm:w-96 sm:max-w-sm ${(showSuggestion || showWelcome) ? 'sm:mr-28' : ''}`}
             style={{
               bottom: Math.max(24 + 80 - position.y, 100)
             }}
