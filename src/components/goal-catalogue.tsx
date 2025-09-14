@@ -1,36 +1,44 @@
-'use client';
+"use client";
 
-import { useAppStore } from '@/lib/store';
-import { GOAL_CATALOGUE } from '@/lib/goals-data';
-import { Goal } from '@/lib/types';
-import { Button } from './ui/button';
+import { useAppStore } from "@/lib/store";
+import { GOAL_CATALOGUE } from "@/lib/goals-data";
+import { Goal } from "@/lib/types";
+import { Button } from "./ui/button";
 
 export function GoalCatalogue() {
   const { setSelectedGoal, setCurrentView, userGoals } = useAppStore();
 
   const handleSelectGoal = (goal: Goal) => {
     setSelectedGoal(goal);
-    setCurrentView('setup');
+    setCurrentView("setup");
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-CA', {
-      style: 'currency',
-      currency: 'CAD',
+    return new Intl.NumberFormat("en-CA", {
+      style: "currency",
+      currency: "CAD",
       minimumFractionDigits: 0,
     }).format(amount);
   };
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
-      case 'travel': return '✈️';
-      case 'education': return '🎓';
-      case 'tech': return '📱';
-      case 'car': return '🚗';
-      case 'home': return '🏠';
-      case 'experience': return '🎵';
-      case 'lifestyle': return '💰';
-      default: return '🎯';
+      case "travel":
+        return "✈️";
+      case "education":
+        return "🎓";
+      case "tech":
+        return "📱";
+      case "car":
+        return "🚗";
+      case "home":
+        return "🏠";
+      case "experience":
+        return "🎵";
+      case "lifestyle":
+        return "💰";
+      default:
+        return "🎯";
     }
   };
 
@@ -55,7 +63,8 @@ export function GoalCatalogue() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-white text-sm">
-                      You have {userGoals.length} active goal{userGoals.length !== 1 ? 's' : ''}
+                      You have {userGoals.length} active goal
+                      {userGoals.length !== 1 ? "s" : ""}
                     </h3>
                     <p className="text-xs text-gray-400">
                       View your progress or add another goal below
@@ -64,7 +73,7 @@ export function GoalCatalogue() {
                 </div>
                 <Button
                   variant="outline"
-                  onClick={() => setCurrentView('dashboard')}
+                  onClick={() => setCurrentView("dashboard")}
                   className="neo-button-secondary text-xs px-3 py-1.5"
                 >
                   View Dashboard
@@ -78,10 +87,13 @@ export function GoalCatalogue() {
         <div className="max-w-6xl mx-auto text-center mb-8">
           <div className="neo-card p-6 mb-6">
             <h1 className="text-3xl font-semibold mb-3 text-white">
-              {userGoals.length > 0 ? 'Add Another Goal' : 'Choose Your Financial Goal'}
+              {userGoals.length > 0
+                ? "Add Another Goal"
+                : "Choose Your Financial Goal"}
             </h1>
             <p className="text-sm text-gray-400 max-w-2xl mx-auto">
-              Select what matters most to you and let our AI create a personalized investment strategy
+              Select what matters most to you and let our AI create a
+              personalized investment strategy
             </p>
           </div>
         </div>
@@ -90,47 +102,77 @@ export function GoalCatalogue() {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {GOAL_CATALOGUE.map((goal, index) => (
-              <div 
-                key={goal.id} 
+              <div
+                key={goal.id}
                 className="neo-card p-5 hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
                 onClick={() => handleSelectGoal(goal)}
               >
-                {/* Goal Icon with Gradient Background */}
+                {/* Goal Image */}
                 <div className="relative mb-4">
-                  <div className="h-24 bg-gradient-to-br from-green-400/20 to-green-600/20 rounded-xl relative neo-glass">
-                    <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm rounded-xl">
-                      <span className="text-4xl">{getCategoryIcon(goal.category)}</span>
+                  <div className="h-36 bg-gradient-to-br from-green-400/20 to-green-600/20 rounded-xl relative overflow-hidden neo-glass">
+                    <img
+                      src={goal.image}
+                      alt={goal.title}
+                      className="absolute inset-0 w-full h-full object-cover rounded-xl"
+                      onError={(e) => {
+                        // Fallback to icon if image fails to load
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = "none";
+                        const parent = target.parentElement;
+                        if (parent) {
+                          const fallback = document.createElement("div");
+                          fallback.className =
+                            "absolute inset-0 flex items-center justify-center backdrop-blur-sm rounded-xl";
+                          fallback.innerHTML = `<span class="text-4xl">${getCategoryIcon(goal.category)}</span>`;
+                          parent.appendChild(fallback);
+                        }
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-black/20 rounded-xl"></div>
+
+                    {/* Partner badge */}
+                    <div className="absolute top-2 left-2 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-lg">
+                      <span className="text-white font-medium text-xs">
+                        {goal.partnerName}
+                      </span>
                     </div>
-                  </div>
-                  
-                  {/* Floating badge */}
-                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-400 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                    {index + 1}
                   </div>
                 </div>
 
                 {/* Content */}
                 <div className="space-y-3">
                   <div>
-                    <h3 className="text-lg font-semibold text-white mb-1">{goal.title}</h3>
-                    <p className="text-gray-400 text-xs leading-relaxed">{goal.description}</p>
+                    <h3 className="text-lg font-semibold text-white mb-1">
+                      {goal.title}
+                    </h3>
+                    <p className="text-gray-400 text-xs leading-relaxed">
+                      {goal.description}
+                    </p>
                   </div>
 
                   {/* Stats */}
                   <div className="space-y-2">
                     <div className="flex justify-between items-center p-2.5 neo-glass rounded-lg">
-                      <span className="text-xs text-gray-400">Target Amount</span>
-                      <span className="font-semibold text-green-400 text-sm">{formatCurrency(goal.finalPrice)}</span>
+                      <span className="text-xs text-gray-400">
+                        Target Amount
+                      </span>
+                      <span className="font-semibold text-green-400 text-sm">
+                        {formatCurrency(goal.finalPrice)}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center p-2.5 neo-glass rounded-lg">
-                      <span className="text-xs text-gray-400">From per month</span>
-                      <span className="text-white font-medium text-xs">{formatCurrency(goal.minMonthlyInvestment)}</span>
+                      <span className="text-xs text-gray-400">
+                        From per month
+                      </span>
+                      <span className="text-white font-medium text-xs">
+                        {formatCurrency(goal.minMonthlyInvestment)}
+                      </span>
                     </div>
                   </div>
 
                   {/* CTA Button */}
                   <div className="pt-3">
-                    <Button 
+                    <Button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleSelectGoal(goal);
@@ -149,11 +191,17 @@ export function GoalCatalogue() {
         {/* Bottom CTA Section */}
         <div className="max-w-4xl mx-auto mt-12 text-center">
           <div className="neo-card p-6">
-            <h2 className="text-lg font-semibold text-white mb-3">Need Help Deciding?</h2>
+            <h2 className="text-lg font-semibold text-white mb-3">
+              Need Help Deciding?
+            </h2>
             <p className="text-gray-400 text-sm mb-4">
-              Our AI coach can help you choose the perfect goal based on your financial situation and preferences.
+              Our AI coach can help you choose the perfect goal based on your
+              financial situation and preferences.
             </p>
-            <Button variant="outline" className="neo-button-secondary text-xs px-4 py-2">
+            <Button
+              variant="outline"
+              className="neo-button-secondary text-xs px-4 py-2"
+            >
               Talk to AI Coach
             </Button>
           </div>
