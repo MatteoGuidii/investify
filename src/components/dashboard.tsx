@@ -1,32 +1,31 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAppStore } from '../lib/store';
+import Image from 'next/image';
 import { apiService } from '../lib/api';
 import { Button } from './ui/button';
 import { PlusCircle, RefreshCw, Wallet } from 'lucide-react';
 import { Portfolio } from '../lib/types';
 import { AiCoach } from './ai-coach';
-import { EpicWrapCard } from './wrap/EpicWrapCard';
 import { EpicWrapSlideOver } from './wrap/EpicWrapSlideOver';
 import { EpicWrapFullScreen } from './wrap/EpicWrapFullScreen';
 import { useLocalDismiss } from '../hooks/useLocalDismiss';
 import { EpicWrap } from '../lib/wrap/types';
 
 export function Dashboard() {
-  const router = useRouter();
   const { 
     currentClient,
     userGoals, 
     setCurrentView,
-    setCurrentClient,
+  setCurrentClient,
+  setActiveUserGoal,
     isLoading,
     setError,
     error,
     restoreDemo
   } = useAppStore();
-  
+  const [, , resetWrapDismiss] = useLocalDismiss('wrap_2025_dismissed');
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showAllGoals, setShowAllGoals] = useState(false);
@@ -35,10 +34,24 @@ export function Dashboard() {
   const [wrapData, setWrapData] = useState<EpicWrap | null>(null);
   const [showWrapSlideOver, setShowWrapSlideOver] = useState(false);
   const [showWrapFullScreen, setShowWrapFullScreen] = useState(false);
-  const [showWrapCard, setShowWrapCard] = useState(false);
-  const [wrapDismissed, dismissWrap, resetWrapDismiss] = useLocalDismiss('wrap_2025_dismissed');
+  // Anchor for AI Coach alignment (Account Overview section)
+  const accountOverviewRef = useRef<HTMLDivElement | null>(null);
+  const [accountOverviewRect, setAccountOverviewRect] = useState<DOMRect | null>(null);
 
-  // Load Epic Wrap data
+  // Measure account overview section for AI Coach positioning
+  useEffect(() => {
+    function measure() {
+      if (accountOverviewRef.current) {
+        setAccountOverviewRect(accountOverviewRef.current.getBoundingClientRect());
+      }
+    }
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [portfolios.length]);
+  // (Wrap dismissal state currently unused apart from reset logic above)
+
+        // (Wrap card auto-show removed; component currently not rendered)
   const loadWrapData = async () => {
     try {
       console.log('Loading wrap data...');
@@ -47,8 +60,7 @@ export function Dashboard() {
         const data = await response.json();
         console.log('Wrap data loaded:', data);
         setWrapData(data);
-        setShowWrapCard(true); // Show the wrap card when data is loaded
-        return data; // Return the data for chaining
+  return data; // Return the data for chaining
       }
       console.log('Failed to load wrap data - response not ok');
       return null;
@@ -59,15 +71,7 @@ export function Dashboard() {
   };
 
   // Epic Wrap handlers
-  const handleViewWrapDetails = () => {
-    // Navigate to dedicated wrap page (re-using sidebar content in a page)
-    router.push('/wrap/2025');
-  };
-
-  const handleDismissWrap = () => {
-    setShowWrapCard(false);
-    dismissWrap();
-  };
+  // (Removed unused handleViewWrapDetails & handleDismissWrap to reduce lint noise)
 
   const handleShareWrap = () => {
     // Copy link to clipboard
@@ -366,35 +370,59 @@ export function Dashboard() {
                 const progressClamped = Math.min(isCompleted ? 100 : computedProgress, 100);
                 
                 return (
-                  <div 
-                    key={`${userGoal.id}-${index}`} 
-                    className={`neo-card p-4 hover:scale-[1.02] transition-transform ${isCompleted ? 'border border-green-500/40' : ''}`}
+                  <div
+                    key={`${userGoal.id}-${index}`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      setActiveUserGoal(userGoal.id);
+                      setCurrentView('goalDetail');
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setActiveUserGoal(userGoal.id);
+                        setCurrentView('goalDetail');
+                      }
+                    }}
+                    className={`neo-card p-4 cursor-pointer hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-green-400/50 transition-transform ${isCompleted ? 'border border-green-500/40' : ''}`}
                   >
-                    {/* Goal Image */}
-                    <div className="h-20 bg-gradient-to-br from-green-400/20 to-green-600/20 rounded-xl relative mb-4 neo-glass">
-                      <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm rounded-xl">
-                        <span className="text-3xl">{getCategoryIcon(userGoal.goal.category)}</span>
-                      </div>
+                    {/* Goal Image or Category Icon Fallback */}
+                    <div className="h-24 rounded-xl relative mb-4 overflow-hidden group bg-black/30">
+                      {userGoal.goal.image ? (
+                        <Image
+                          src={userGoal.goal.image}
+                          alt={userGoal.goal.title}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                          className="object-cover transform group-hover:scale-105 transition-transform duration-500"
+                          priority={index < 2}
+                        />
+                      ) : (
+                        <div className="h-full w-full bg-gradient-to-br from-green-400/20 to-green-600/20 flex items-center justify-center text-3xl">
+                          {getCategoryIcon(userGoal.goal.category)}
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity" />
                       {isCompleted && (
                         <div className="absolute top-2 right-2">
-                          <span className="px-2 py-0.5 text-[10px] rounded-full bg-green-500/20 border border-green-400/30 text-green-300 font-semibold">
+                          <span className="px-2 py-0.5 text-[10px] rounded-full bg-green-500/30 backdrop-blur-sm border border-green-400/40 text-green-200 font-semibold">
                             Completed
                           </span>
                         </div>
                       )}
                     </div>
-                    
+
                     <div>
-                      <h3 className="font-semibold text-base mb-1 text-white">{userGoal.goal.title}</h3>
+                      <h3 className="font-semibold text-base mb-1 text-white line-clamp-1">{userGoal.goal.title}</h3>
                       <p className="text-sm text-green-400 font-medium mb-3">{formatCurrency(userGoal.targetAmount)}</p>
-                      
                       <div className="space-y-2">
                         <div className="relative">
                           <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                            <div 
+                            <div
                               className="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full transition-all duration-500"
                               style={{ width: `${progressClamped}%` }}
-                            ></div>
+                            />
                           </div>
                         </div>
                         <div className="flex justify-between text-xs">
@@ -428,7 +456,7 @@ export function Dashboard() {
 
           {/* Account Summary */}
           {portfolios.length > 0 && (
-            <div className="mt-8">
+            <div className="mt-8" ref={accountOverviewRef}>
               <h3 className="text-lg font-semibold mb-4 text-white">Account Overview</h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="neo-glass p-4 rounded-xl">
@@ -480,8 +508,8 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* AI Coach floating assistant */}
-      <AiCoach />
+  {/* AI Coach floating assistant aligned with Account Overview */}
+  <AiCoach anchorRect={accountOverviewRect} colorful />
 
       {/* Epic Wrap Slide Over (kept for potential future use) */}
       {wrapData && (

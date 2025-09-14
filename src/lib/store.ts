@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { UserGoal, Goal, AppUser, Client } from './types';
+import { UserGoal, Goal, AppUser, Client, Milestone } from './types';
 import { GOAL_CATALOGUE } from './goals-data';
 import { apiService } from './api';
 
@@ -18,13 +18,15 @@ interface AppState {
   
   // UI state
   isLoading: boolean;
-  currentView: 'auth' | 'catalogue' | 'setup' | 'dashboard' | 'rewards';
+  currentView: 'auth' | 'catalogue' | 'setup' | 'dashboard' | 'rewards' | 'goalDetail';
   error: string | null;
+  activeUserGoalId: string | null;
   
   // Actions
   setUser: (user: AppUser) => void;
   setCurrentClient: (client: Client) => void;
   setSelectedGoal: (goal: Goal) => void;
+  setActiveUserGoal: (userGoalId: string) => void;
   addUserGoal: (goal: UserGoal) => void;
   updateUserGoal: (goalId: string, updates: Partial<UserGoal>) => void;
   removeUserGoal: (goalId: string) => Promise<void>;
@@ -37,6 +39,8 @@ interface AppState {
   createClient: (name: string, email: string, initialCash: number) => Promise<boolean>;
   loginAsTestUser: () => Promise<void>;
   createGoalBasedInvestment: (goalId: string, monthlyContribution: number, targetDate: Date) => Promise<boolean>;
+  addOneTimeContribution: (userGoalId: string, amount: number) => void;
+  setRecurringContribution: (userGoalId: string, amount: number) => void;
   logout: () => void;
   initializeFromStorage: () => Promise<void>;
   // Demo utilities
@@ -54,8 +58,9 @@ export const useAppStore = create<AppState>()(
       userGoals: [],
       selectedGoal: null,
       isLoading: false,
-      currentView: 'auth',
+  currentView: 'auth',
       error: null,
+  activeUserGoalId: null,
 
       // Basic actions
       setUser: (user: AppUser) => {
@@ -72,7 +77,7 @@ export const useAppStore = create<AppState>()(
 
       // Reset demo: clear session and reseed Hamudy from scratch
       resetDemo: async () => {
-        const { logout, loginAsTestUser } = get();
+  const { logout } = get();
         try {
           // Clear local storage flags and session
           if (typeof window !== 'undefined') {
@@ -145,7 +150,7 @@ export const useAppStore = create<AppState>()(
                 { id: `ms-10-r-${idx}`, title: 'First Steps', targetPercent: 10, targetAmount: targetAmount * 0.1, achieved: true, achievedDate: new Date(createdAt.getTime() + 20 * 24 * 60 * 60 * 1000), reward: '500 Avion Points' },
                 { id: `ms-25-r-${idx}`, title: 'Quarter Way', targetPercent: 25, targetAmount: targetAmount * 0.25, achieved: true, achievedDate: new Date(createdAt.getTime() + 60 * 24 * 60 * 60 * 1000), reward: '1,000 Avion Points' },
                 { id: `ms-50-r-${idx}`, title: 'Halfway Hero', targetPercent: 50, targetAmount: targetAmount * 0.5, achieved: (currentAmount / targetAmount) >= 0.5 || isCompleted, achievedDate: isCompleted ? new Date(createdAt.getTime() + 90 * 24 * 60 * 60 * 1000) : undefined, reward: '2,500 Avion Points + $25 Gift Card' },
-                ...(isCompleted ? [{ id: `ms-100-r-${idx}`, title: 'Goal Achieved!', targetPercent: 100, targetAmount: targetAmount, achieved: true, achievedDate: new Date(createdAt.getTime() + 120 * 24 * 60 * 60 * 1000), reward: `${goal.discountPercent}% Partner Discount + 10,000 Avion Points` }] as any : []),
+                ...(isCompleted ? [{ id: `ms-100-r-${idx}`, title: 'Goal Achieved!', targetPercent: 100, targetAmount: targetAmount, achieved: true, achievedDate: new Date(createdAt.getTime() + 120 * 24 * 60 * 60 * 1000), reward: `${goal.discountPercent}% Partner Discount + 10,000 Avion Points` }] as Milestone[] : []),
               ],
             };
             addUserGoal(ug);
@@ -166,7 +171,8 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      setSelectedGoal: (goal: Goal) => set({ selectedGoal: goal }),
+  setSelectedGoal: (goal: Goal) => set({ selectedGoal: goal }),
+  setActiveUserGoal: (userGoalId: string) => set({ activeUserGoalId: userGoalId }),
 
       addUserGoal: (goal: UserGoal) =>
         set((state) => {
@@ -187,6 +193,28 @@ export const useAppStore = create<AppState>()(
           }
           return { userGoals: next };
         }),
+      addOneTimeContribution: (userGoalId: string, amount: number) => {
+        if (amount <= 0) return;
+        const goal = get().userGoals.find(g => g.id === userGoalId);
+        if (!goal) return;
+        const newCurrent = goal.currentAmount + amount;
+        const newProgress = Math.min(100, (newCurrent / goal.targetAmount) * 100);
+        // Auto-achieve milestones whose targetPercent is now met
+        const updatedMilestones = goal.milestones.map(m =>
+          newProgress >= m.targetPercent ? { ...m, achieved: true, achievedDate: m.achievedDate || new Date() } : m
+        );
+        get().updateUserGoal(userGoalId, {
+          currentAmount: newCurrent,
+          progressPercent: newProgress,
+          status: newCurrent >= goal.targetAmount ? 'completed' : goal.status,
+          milestones: updatedMilestones,
+        });
+      },
+      setRecurringContribution: (userGoalId: string, amount: number) => {
+        const goal = get().userGoals.find(g => g.id === userGoalId);
+        if (!goal) return;
+        get().updateUserGoal(userGoalId, { monthlyContribution: amount });
+      },
 
       removeUserGoal: async (goalId: string) => {
         const { userGoals, setLoading, setError } = get();
@@ -461,8 +489,89 @@ export const useAppStore = create<AppState>()(
         const clientSuccess = await createClient(testClientName, testEmail, testInitialCash);
 
         if (clientSuccess) {
-          // Use centralized restore to apply flags and seed goals
+          // Use centralized restore to apply flags and seed goals (unified logic)
           await get().restoreDemo();
+          // Mark demo profile as wrap-ready so UI can show completed challenges, etc.
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('demo_mode', 'true');
+              localStorage.setItem('demo_rewards_profile', 'wrap_ready');
+            } catch (e) {
+              console.warn('Failed to persist demo flags', e);
+            }
+          }
+
+          // Seed some wrap-ready demo goals to make the dashboard lively
+          try {
+            const seedGoals: Array<{
+              id: string;
+              monthly: number;
+              saved: number;
+              status: 'active' | 'paused' | 'completed';
+              backdatedMonths?: number; // to backdate createdAt
+            }> = [
+              // Active goals with strong progress
+              { id: 'vacation-europe', monthly: 300, saved: 3200, status: 'active', backdatedMonths: 10 },
+              { id: 'new-laptop', monthly: 200, saved: 2000, status: 'completed', backdatedMonths: 6 },
+              { id: 'emergency-fund', monthly: 220, saved: 3800, status: 'active', backdatedMonths: 12 },
+              // Additional flavor goals
+              { id: 'concert-tickets', monthly: 125, saved: 1000, status: 'completed', backdatedMonths: 4 },
+              { id: 'home-deposit', monthly: 600, saved: 6000, status: 'active', backdatedMonths: 8 },
+            ];
+
+            const goalsMap: Record<string, Goal> = Object.fromEntries(
+              GOAL_CATALOGUE.map(g => [g.id, g])
+            );
+
+            seedGoals.forEach((g, idx) => {
+              const goal = goalsMap[g.id];
+              if (!goal) return;
+              const targetAmount = goal.finalPrice;
+              const isCompleted = g.status === 'completed' || g.saved >= targetAmount;
+              const createdAt = new Date(Date.now() - (g.backdatedMonths ?? 6) * 30 * 24 * 60 * 60 * 1000);
+              const currentAmount = isCompleted ? targetAmount : Math.min(g.saved, Math.max(targetAmount * 0.15, targetAmount * 0.85));
+              const completionMilestones: Milestone[] = isCompleted ? [
+                {
+                  id: `ms-100-${idx}`,
+                  title: 'Goal Achieved!',
+                  targetPercent: 100,
+                  targetAmount: targetAmount,
+                  achieved: true,
+                  achievedDate: new Date(createdAt.getTime() + 120 * 24 * 60 * 60 * 1000),
+                  reward: `${goal.discountPercent}% Partner Discount + 10,000 Avion Points`
+                }
+              ] : [];
+
+              const userGoal: UserGoal = {
+                id: `demo-goal-${idx}-${Date.now()}`,
+                goalId: goal.id,
+                goal,
+                clientId: get().currentClient!.id,
+                targetAmount,
+                monthlyContribution: g.monthly,
+                targetDate: new Date(Date.now() + goal.estimatedMonths * 30 * 24 * 60 * 60 * 1000),
+                currentAmount,
+                progressPercent: Math.min(100, (currentAmount / targetAmount) * 100),
+                projectedCompletion: isCompleted
+                  ? new Date(Date.now() - 20 * 24 * 60 * 60 * 1000)
+                  : new Date(Date.now() + (goal.estimatedMonths - 2) * 30 * 24 * 60 * 60 * 1000),
+                status: isCompleted ? 'completed' : g.status,
+                createdAt,
+                milestones: [
+                  { id: `ms-10-${idx}`, title: 'First Steps', targetPercent: 10, targetAmount: targetAmount * 0.1, achieved: true, achievedDate: new Date(createdAt.getTime() + 20 * 24 * 60 * 60 * 1000), reward: '500 Avion Points' },
+                  { id: `ms-25-${idx}`, title: 'Quarter Way', targetPercent: 25, targetAmount: targetAmount * 0.25, achieved: true, achievedDate: new Date(createdAt.getTime() + 60 * 24 * 60 * 60 * 1000), reward: '1,000 Avion Points' },
+                  { id: `ms-50-${idx}`, title: 'Halfway Hero', targetPercent: 50, targetAmount: targetAmount * 0.5, achieved: (currentAmount / targetAmount) >= 0.5 || isCompleted, achievedDate: isCompleted ? new Date(createdAt.getTime() + 90 * 24 * 60 * 60 * 1000) : undefined, reward: '2,500 Avion Points + $25 Gift Card' },
+                  ...completionMilestones,
+                ],
+              };
+              get().addUserGoal(userGoal);
+            });
+          } catch (e) {
+            console.warn('Failed to seed demo goals', e);
+          }
+
+          // Land on dashboard for demo
+          setCurrentView('dashboard');
         } 
         // Error is handled by createClient
 
@@ -525,6 +634,15 @@ export const useAppStore = create<AppState>()(
                       const isCompleted = g.status === 'completed' || g.saved >= targetAmount;
                       const createdAt = new Date(Date.now() - (g.backdatedMonths ?? 6) * 30 * 24 * 60 * 60 * 1000);
                       const currentAmount = isCompleted ? targetAmount : Math.min(g.saved, targetAmount * 0.95);
+                      const completionMilestones: Milestone[] = isCompleted ? [{
+                        id: `ms-100-${idx}`,
+                        title: 'Goal Achieved!',
+                        targetPercent: 100,
+                        targetAmount: targetAmount,
+                        achieved: true,
+                        achievedDate: new Date(createdAt.getTime() + 120 * 24 * 60 * 60 * 1000),
+                        reward: `${goal.discountPercent}% Partner Discount + 10,000 Avion Points`
+                      }] : [];
                       const userGoal: UserGoal = {
                         id: `demo-goal-${idx}-${Date.now()}`,
                         goalId: goal.id,
@@ -542,7 +660,7 @@ export const useAppStore = create<AppState>()(
                           { id: `ms-10-${idx}`, title: 'First Steps', targetPercent: 10, targetAmount: targetAmount * 0.1, achieved: true, achievedDate: new Date(createdAt.getTime() + 20 * 24 * 60 * 60 * 1000), reward: '500 Avion Points' },
                           { id: `ms-25-${idx}`, title: 'Quarter Way', targetPercent: 25, targetAmount: targetAmount * 0.25, achieved: true, achievedDate: new Date(createdAt.getTime() + 60 * 24 * 60 * 60 * 1000), reward: '1,000 Avion Points' },
                           { id: `ms-50-${idx}`, title: 'Halfway Hero', targetPercent: 50, targetAmount: targetAmount * 0.5, achieved: (currentAmount / targetAmount) >= 0.5 || isCompleted, achievedDate: isCompleted ? new Date(createdAt.getTime() + 90 * 24 * 60 * 60 * 1000) : undefined, reward: '2,500 Avion Points + $25 Gift Card' },
-                          ...(isCompleted ? [{ id: `ms-100-${idx}`, title: 'Goal Achieved!', targetPercent: 100, targetAmount: targetAmount, achieved: true, achievedDate: new Date(createdAt.getTime() + 120 * 24 * 60 * 60 * 1000), reward: `${goal.discountPercent}% Partner Discount + 10,000 Avion Points` }] as any : []),
+                          ...completionMilestones,
                         ],
                       };
                       get().addUserGoal(userGoal);
