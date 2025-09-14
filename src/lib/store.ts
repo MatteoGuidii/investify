@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { UserGoal, Goal, AppUser, Client } from './types';
+import { UserGoal, Goal, AppUser, Client, Milestone } from './types';
+import { GOAL_CATALOGUE } from './goals-data';
 import { apiService } from './api';
 
 interface AppState {
@@ -17,13 +18,15 @@ interface AppState {
   
   // UI state
   isLoading: boolean;
-  currentView: 'auth' | 'catalogue' | 'setup' | 'dashboard' | 'rewards';
+  currentView: 'auth' | 'catalogue' | 'setup' | 'dashboard' | 'rewards' | 'goalDetail';
   error: string | null;
+  activeUserGoalId: string | null;
   
   // Actions
   setUser: (user: AppUser) => void;
   setCurrentClient: (client: Client) => void;
   setSelectedGoal: (goal: Goal) => void;
+  setActiveUserGoal: (userGoalId: string) => void;
   addUserGoal: (goal: UserGoal) => void;
   updateUserGoal: (goalId: string, updates: Partial<UserGoal>) => void;
   removeUserGoal: (goalId: string) => Promise<void>;
@@ -36,8 +39,13 @@ interface AppState {
   createClient: (name: string, email: string, initialCash: number) => Promise<boolean>;
   loginAsTestUser: () => Promise<void>;
   createGoalBasedInvestment: (goalId: string, monthlyContribution: number, targetDate: Date) => Promise<boolean>;
+  addOneTimeContribution: (userGoalId: string, amount: number) => void;
+  setRecurringContribution: (userGoalId: string, amount: number) => void;
   logout: () => void;
   initializeFromStorage: () => Promise<void>;
+  // Demo utilities
+  restoreDemo: () => Promise<void>;
+  resetDemo: () => Promise<void>;
 }
 
 export const useAppStore = create<AppState>()(
@@ -50,8 +58,9 @@ export const useAppStore = create<AppState>()(
       userGoals: [],
       selectedGoal: null,
       isLoading: false,
-      currentView: 'auth',
+  currentView: 'auth',
       error: null,
+  activeUserGoalId: null,
 
       // Basic actions
       setUser: (user: AppUser) => {
@@ -66,6 +75,93 @@ export const useAppStore = create<AppState>()(
         apiService.setAuthToken(user.jwtToken);
       },
 
+      // Reset demo: clear session and reseed Hamudy from scratch
+      resetDemo: async () => {
+  const { logout } = get();
+        try {
+          // Clear local storage flags and session
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('rbc_user');
+            localStorage.removeItem('rbc_current_client');
+          }
+          logout();
+
+          // Recreate demo user and reseed data
+          await get().loginAsTestUser();
+        } catch (e) {
+          console.warn('Failed to reset demo', e);
+        }
+      },
+
+      // Restore demo: reapply flags and reseed Hamudy's goals if a client exists; otherwise create demo user
+      restoreDemo: async () => {
+        const { currentClient, setCurrentView, addUserGoal, loginAsTestUser } = get();
+        try {
+          // Ensure demo flags
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('demo_mode', 'true');
+            localStorage.setItem('demo_rewards_profile', 'wrap_ready');
+          }
+
+          // If no client/session, fallback to creating demo user
+          if (!currentClient) {
+            await loginAsTestUser();
+            return;
+          }
+
+          // Clear existing goals and reseed a rich demo profile
+          set({ userGoals: [] });
+
+          const goalsMap: Record<string, Goal> = Object.fromEntries(
+            GOAL_CATALOGUE.map(g => [g.id, g])
+          );
+          // Use current catalogue IDs directly to avoid mismatches
+          // Smaller, more realistic set with reduced monthly contributions
+          const seed: Array<{ id: string; monthly: number; saved: number; status: 'active' | 'paused' | 'completed'; backdatedMonths?: number; }> = [
+            // Completed goals
+            { id: 'macbook-pro-m3', monthly: 150, saved: 2400, status: 'completed', backdatedMonths: 12 }, // 2400 target
+            { id: 'home-furniture', monthly: 200, saved: 5000, status: 'completed', backdatedMonths: 10 }, // 5000 target
+            // Active with reasonable progress
+            { id: 'graduation-trip-france', monthly: 180, saved: 2200, status: 'active', backdatedMonths: 8 }, // 4000 target
+            { id: 'mexico-vacation', monthly: 150, saved: 1600, status: 'active', backdatedMonths: 6 }, // 2800 target
+          ];
+
+          seed.forEach((g, idx) => {
+            const goal = goalsMap[g.id];
+            if (!goal) return;
+            const targetAmount = goal.finalPrice;
+            const isCompleted = g.status === 'completed' || g.saved >= targetAmount;
+            const createdAt = new Date(Date.now() - (g.backdatedMonths ?? 6) * 30 * 24 * 60 * 60 * 1000);
+            const currentAmount = isCompleted ? targetAmount : Math.min(g.saved, Math.max(targetAmount * 0.15, targetAmount * 0.85));
+            const ug: UserGoal = {
+              id: `demo-restore-${idx}-${Date.now()}`,
+              goalId: goal.id,
+              goal,
+              clientId: get().currentClient!.id,
+              targetAmount,
+              monthlyContribution: g.monthly,
+              targetDate: new Date(Date.now() + goal.estimatedMonths * 30 * 24 * 60 * 60 * 1000),
+              currentAmount,
+              progressPercent: Math.min(100, (currentAmount / targetAmount) * 100),
+              projectedCompletion: isCompleted ? new Date(Date.now() - 20 * 24 * 60 * 60 * 1000) : new Date(Date.now() + (goal.estimatedMonths - 2) * 30 * 24 * 60 * 60 * 1000),
+              status: isCompleted ? 'completed' : g.status,
+              createdAt,
+              milestones: [
+                { id: `ms-10-r-${idx}`, title: 'First Steps', targetPercent: 10, targetAmount: targetAmount * 0.1, achieved: true, achievedDate: new Date(createdAt.getTime() + 20 * 24 * 60 * 60 * 1000), reward: '500 Avion Points' },
+                { id: `ms-25-r-${idx}`, title: 'Quarter Way', targetPercent: 25, targetAmount: targetAmount * 0.25, achieved: true, achievedDate: new Date(createdAt.getTime() + 60 * 24 * 60 * 60 * 1000), reward: '1,000 Avion Points' },
+                { id: `ms-50-r-${idx}`, title: 'Halfway Hero', targetPercent: 50, targetAmount: targetAmount * 0.5, achieved: (currentAmount / targetAmount) >= 0.5 || isCompleted, achievedDate: isCompleted ? new Date(createdAt.getTime() + 90 * 24 * 60 * 60 * 1000) : undefined, reward: '2,500 Avion Points + $25 Gift Card' },
+                ...(isCompleted ? [{ id: `ms-100-r-${idx}`, title: 'Goal Achieved!', targetPercent: 100, targetAmount: targetAmount, achieved: true, achievedDate: new Date(createdAt.getTime() + 120 * 24 * 60 * 60 * 1000), reward: `${goal.discountPercent}% Partner Discount + 10,000 Avion Points` }] as Milestone[] : []),
+              ],
+            };
+            addUserGoal(ug);
+          });
+
+          setCurrentView('dashboard');
+        } catch (e) {
+          console.warn('Failed to restore demo', e);
+        }
+      },
+
       setCurrentClient: (client: Client) => {
         set({ currentClient: client });
         
@@ -75,19 +171,50 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      setSelectedGoal: (goal: Goal) => set({ selectedGoal: goal }),
+  setSelectedGoal: (goal: Goal) => set({ selectedGoal: goal }),
+  setActiveUserGoal: (userGoalId: string) => set({ activeUserGoalId: userGoalId }),
 
       addUserGoal: (goal: UserGoal) =>
-        set((state) => ({
-          userGoals: [...state.userGoals, goal],
-        })),
+        set((state) => {
+          const next = [...state.userGoals, goal];
+          if (typeof window !== 'undefined') {
+            try { localStorage.setItem('rbc_user_goals', JSON.stringify(next)); } catch {}
+          }
+          return { userGoals: next };
+        }),
 
       updateUserGoal: (goalId: string, updates: Partial<UserGoal>) =>
-        set((state) => ({
-          userGoals: state.userGoals.map((goal) =>
+        set((state) => {
+          const next = state.userGoals.map((goal) =>
             goal.id === goalId ? { ...goal, ...updates } : goal
-          ),
-        })),
+          );
+          if (typeof window !== 'undefined') {
+            try { localStorage.setItem('rbc_user_goals', JSON.stringify(next)); } catch {}
+          }
+          return { userGoals: next };
+        }),
+      addOneTimeContribution: (userGoalId: string, amount: number) => {
+        if (amount <= 0) return;
+        const goal = get().userGoals.find(g => g.id === userGoalId);
+        if (!goal) return;
+        const newCurrent = goal.currentAmount + amount;
+        const newProgress = Math.min(100, (newCurrent / goal.targetAmount) * 100);
+        // Auto-achieve milestones whose targetPercent is now met
+        const updatedMilestones = goal.milestones.map(m =>
+          newProgress >= m.targetPercent ? { ...m, achieved: true, achievedDate: m.achievedDate || new Date() } : m
+        );
+        get().updateUserGoal(userGoalId, {
+          currentAmount: newCurrent,
+          progressPercent: newProgress,
+          status: newCurrent >= goal.targetAmount ? 'completed' : goal.status,
+          milestones: updatedMilestones,
+        });
+      },
+      setRecurringContribution: (userGoalId: string, amount: number) => {
+        const goal = get().userGoals.find(g => g.id === userGoalId);
+        if (!goal) return;
+        get().updateUserGoal(userGoalId, { monthlyContribution: amount });
+      },
 
       removeUserGoal: async (goalId: string) => {
         const { userGoals, setLoading, setError } = get();
@@ -101,9 +228,13 @@ export const useAppStore = create<AppState>()(
           // For now, we'll just remove from local state and let user manage portfolio separately
           // This prevents accidental deletion of portfolios with multiple goals
           
-          set((state) => ({
-            userGoals: state.userGoals.filter((goal) => goal.id !== goalId),
-          }));
+          set((state) => {
+            const next = state.userGoals.filter((goal) => goal.id !== goalId);
+            if (typeof window !== 'undefined') {
+              try { localStorage.setItem('rbc_user_goals', JSON.stringify(next)); } catch {}
+            }
+            return { userGoals: next };
+          });
           
         } catch (error) {
           console.error('Error removing goal:', error);
@@ -334,9 +465,9 @@ export const useAppStore = create<AppState>()(
         setLoading(true);
         setError(null);
 
-        const testEmail = `test-${Date.now()}@goals.app`;
-        const testTeamName = `test-team-${Date.now()}`;
-        const testClientName = 'Test User';
+        const testEmail = `hamudy-${Date.now()}@goals.app`;
+        const testTeamName = `hamudy-team-${Date.now()}`;
+        const testClientName = 'Hamudy';
         const testInitialCash = 50000;
 
         // Logout any existing user to ensure a clean test session
@@ -358,7 +489,89 @@ export const useAppStore = create<AppState>()(
         const clientSuccess = await createClient(testClientName, testEmail, testInitialCash);
 
         if (clientSuccess) {
-          setCurrentView('catalogue');
+          // Use centralized restore to apply flags and seed goals (unified logic)
+          await get().restoreDemo();
+          // Mark demo profile as wrap-ready so UI can show completed challenges, etc.
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('demo_mode', 'true');
+              localStorage.setItem('demo_rewards_profile', 'wrap_ready');
+            } catch (e) {
+              console.warn('Failed to persist demo flags', e);
+            }
+          }
+
+          // Seed some wrap-ready demo goals to make the dashboard lively
+          try {
+            const seedGoals: Array<{
+              id: string;
+              monthly: number;
+              saved: number;
+              status: 'active' | 'paused' | 'completed';
+              backdatedMonths?: number; // to backdate createdAt
+            }> = [
+              // Active goals with strong progress
+              { id: 'vacation-europe', monthly: 300, saved: 3200, status: 'active', backdatedMonths: 10 },
+              { id: 'new-laptop', monthly: 200, saved: 2000, status: 'completed', backdatedMonths: 6 },
+              { id: 'emergency-fund', monthly: 220, saved: 3800, status: 'active', backdatedMonths: 12 },
+              // Additional flavor goals
+              { id: 'concert-tickets', monthly: 125, saved: 1000, status: 'completed', backdatedMonths: 4 },
+              { id: 'home-deposit', monthly: 600, saved: 6000, status: 'active', backdatedMonths: 8 },
+            ];
+
+            const goalsMap: Record<string, Goal> = Object.fromEntries(
+              GOAL_CATALOGUE.map(g => [g.id, g])
+            );
+
+            seedGoals.forEach((g, idx) => {
+              const goal = goalsMap[g.id];
+              if (!goal) return;
+              const targetAmount = goal.finalPrice;
+              const isCompleted = g.status === 'completed' || g.saved >= targetAmount;
+              const createdAt = new Date(Date.now() - (g.backdatedMonths ?? 6) * 30 * 24 * 60 * 60 * 1000);
+              const currentAmount = isCompleted ? targetAmount : Math.min(g.saved, Math.max(targetAmount * 0.15, targetAmount * 0.85));
+              const completionMilestones: Milestone[] = isCompleted ? [
+                {
+                  id: `ms-100-${idx}`,
+                  title: 'Goal Achieved!',
+                  targetPercent: 100,
+                  targetAmount: targetAmount,
+                  achieved: true,
+                  achievedDate: new Date(createdAt.getTime() + 120 * 24 * 60 * 60 * 1000),
+                  reward: `${goal.discountPercent}% Partner Discount + 10,000 Avion Points`
+                }
+              ] : [];
+
+              const userGoal: UserGoal = {
+                id: `demo-goal-${idx}-${Date.now()}`,
+                goalId: goal.id,
+                goal,
+                clientId: get().currentClient!.id,
+                targetAmount,
+                monthlyContribution: g.monthly,
+                targetDate: new Date(Date.now() + goal.estimatedMonths * 30 * 24 * 60 * 60 * 1000),
+                currentAmount,
+                progressPercent: Math.min(100, (currentAmount / targetAmount) * 100),
+                projectedCompletion: isCompleted
+                  ? new Date(Date.now() - 20 * 24 * 60 * 60 * 1000)
+                  : new Date(Date.now() + (goal.estimatedMonths - 2) * 30 * 24 * 60 * 60 * 1000),
+                status: isCompleted ? 'completed' : g.status,
+                createdAt,
+                milestones: [
+                  { id: `ms-10-${idx}`, title: 'First Steps', targetPercent: 10, targetAmount: targetAmount * 0.1, achieved: true, achievedDate: new Date(createdAt.getTime() + 20 * 24 * 60 * 60 * 1000), reward: '500 Avion Points' },
+                  { id: `ms-25-${idx}`, title: 'Quarter Way', targetPercent: 25, targetAmount: targetAmount * 0.25, achieved: true, achievedDate: new Date(createdAt.getTime() + 60 * 24 * 60 * 60 * 1000), reward: '1,000 Avion Points' },
+                  { id: `ms-50-${idx}`, title: 'Halfway Hero', targetPercent: 50, targetAmount: targetAmount * 0.5, achieved: (currentAmount / targetAmount) >= 0.5 || isCompleted, achievedDate: isCompleted ? new Date(createdAt.getTime() + 90 * 24 * 60 * 60 * 1000) : undefined, reward: '2,500 Avion Points + $25 Gift Card' },
+                  ...completionMilestones,
+                ],
+              };
+              get().addUserGoal(userGoal);
+            });
+          } catch (e) {
+            console.warn('Failed to seed demo goals', e);
+          }
+
+          // Land on dashboard for demo
+          setCurrentView('dashboard');
         } 
         // Error is handled by createClient
 
@@ -385,9 +598,81 @@ export const useAppStore = create<AppState>()(
               if (storedClient) {
                 const client: Client = JSON.parse(storedClient);
                 setCurrentClient(client);
-                setCurrentView('catalogue'); // Always start with catalogue for goal-first approach
+                // Hydrate saved goals if present
+                try {
+                  const savedGoals = localStorage.getItem('rbc_user_goals');
+                  if (savedGoals) {
+                    const parsed: UserGoal[] = JSON.parse(savedGoals);
+                    if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+                      set({ userGoals: parsed });
+                    }
+                  }
+                } catch {}
+
+                // If demo flags are present, land on dashboard to showcase wrap-ready state
+                const demo = localStorage.getItem('demo_mode') === 'true';
+                const profile = localStorage.getItem('demo_rewards_profile');
+                setCurrentView(demo && profile === 'wrap_ready' ? 'dashboard' : 'catalogue');
+
+                // If demo and no goals seeded yet (fresh reload), seed again for consistency
+                if (demo && profile === 'wrap_ready' && get().userGoals.length === 0) {
+                  try {
+                    const goalsMap: Record<string, Goal> = Object.fromEntries(
+                      GOAL_CATALOGUE.map(g => [g.id, g])
+                    );
+                    // Use current catalogue IDs directly (reduced set) and lower monthly contributions
+                    const seed: Array<{ id: string; monthly: number; saved: number; status: 'active' | 'paused' | 'completed'; backdatedMonths?: number; }> = [
+                      { id: 'macbook-pro-m3', monthly: 150, saved: 2400, status: 'completed', backdatedMonths: 12 },
+                      { id: 'home-furniture', monthly: 200, saved: 5000, status: 'completed', backdatedMonths: 10 },
+                      { id: 'graduation-trip-france', monthly: 180, saved: 2200, status: 'active', backdatedMonths: 8 },
+                      { id: 'mexico-vacation', monthly: 150, saved: 1600, status: 'active', backdatedMonths: 6 },
+                    ];
+                    seed.forEach((g, idx) => {
+                      const goal = goalsMap[g.id];
+                      if (!goal) return;
+                      const targetAmount = goal.finalPrice;
+                      const isCompleted = g.status === 'completed' || g.saved >= targetAmount;
+                      const createdAt = new Date(Date.now() - (g.backdatedMonths ?? 6) * 30 * 24 * 60 * 60 * 1000);
+                      const currentAmount = isCompleted ? targetAmount : Math.min(g.saved, targetAmount * 0.95);
+                      const completionMilestones: Milestone[] = isCompleted ? [{
+                        id: `ms-100-${idx}`,
+                        title: 'Goal Achieved!',
+                        targetPercent: 100,
+                        targetAmount: targetAmount,
+                        achieved: true,
+                        achievedDate: new Date(createdAt.getTime() + 120 * 24 * 60 * 60 * 1000),
+                        reward: `${goal.discountPercent}% Partner Discount + 10,000 Avion Points`
+                      }] : [];
+                      const userGoal: UserGoal = {
+                        id: `demo-goal-${idx}-${Date.now()}`,
+                        goalId: goal.id,
+                        goal,
+                        clientId: get().currentClient!.id,
+                        targetAmount,
+                        monthlyContribution: g.monthly,
+                        targetDate: new Date(Date.now() + goal.estimatedMonths * 30 * 24 * 60 * 60 * 1000),
+                        currentAmount,
+                        progressPercent: Math.min(100, (currentAmount / targetAmount) * 100),
+                        projectedCompletion: isCompleted ? new Date(Date.now() - 20 * 24 * 60 * 60 * 1000) : new Date(Date.now() + (goal.estimatedMonths - 2) * 30 * 24 * 60 * 60 * 1000),
+                        status: isCompleted ? 'completed' : g.status,
+                        createdAt,
+                        milestones: [
+                          { id: `ms-10-${idx}`, title: 'First Steps', targetPercent: 10, targetAmount: targetAmount * 0.1, achieved: true, achievedDate: new Date(createdAt.getTime() + 20 * 24 * 60 * 60 * 1000), reward: '500 Avion Points' },
+                          { id: `ms-25-${idx}`, title: 'Quarter Way', targetPercent: 25, targetAmount: targetAmount * 0.25, achieved: true, achievedDate: new Date(createdAt.getTime() + 60 * 24 * 60 * 60 * 1000), reward: '1,000 Avion Points' },
+                          { id: `ms-50-${idx}`, title: 'Halfway Hero', targetPercent: 50, targetAmount: targetAmount * 0.5, achieved: (currentAmount / targetAmount) >= 0.5 || isCompleted, achievedDate: isCompleted ? new Date(createdAt.getTime() + 90 * 24 * 60 * 60 * 1000) : undefined, reward: '2,500 Avion Points + $25 Gift Card' },
+                          ...completionMilestones,
+                        ],
+                      };
+                      get().addUserGoal(userGoal);
+                    });
+                  } catch (e) {
+                    console.warn('Failed to seed demo goals on init', e);
+                  }
+                }
               } else {
-                setCurrentView('catalogue');
+                const demo = localStorage.getItem('demo_mode') === 'true';
+                const profile = localStorage.getItem('demo_rewards_profile');
+                setCurrentView(demo && profile === 'wrap_ready' ? 'dashboard' : 'catalogue');
               }
             } else {
               // Token expired, clear storage

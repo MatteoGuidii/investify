@@ -18,12 +18,10 @@ export function Header() {
                     <div className="w-3 h-3 rounded bg-white"></div>
                   </div>
                 </div>
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-neo-accent rounded-full flex items-center justify-center">
-                  <div className="w-2 h-2 bg-white rounded-full"></div>
-                </div>
+                {/* Removed decorative accent circle */}
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">Investify</h1>
+                <h1 className="text-2xl font-bold text-white">Investify</h1>
               </div>
             </div>
 
@@ -38,7 +36,7 @@ export function Header() {
                   key={key}
                   onClick={() => setCurrentView(key as 'dashboard' | 'catalogue' | 'rewards')}
                   className={`
-                    flex items-center space-x-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300
+                    flex items-center space-x-2 px-4 py-2.5 rounded-xl text-base font-medium transition-all duration-300
                     ${currentView === key 
                       ? 'bg-white/20 text-white shadow-lg border border-white/20' 
                       : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -56,7 +54,7 @@ export function Header() {
               {/* User Avatar */}
               <div className="flex items-center space-x-3">
                 <div className="text-right">
-                  <div className="text-sm font-semibold text-white">
+                  <div className="text-base font-semibold text-white">
                     {currentClient?.name || user?.teamName || 'Test User'}
                   </div>
                 </div>
@@ -64,7 +62,7 @@ export function Header() {
                   onClick={logout}
                   className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center hover:scale-105 transition-transform"
                 >
-                  <span className="text-sm font-bold text-white">
+                  <span className="text-base font-bold text-white">
                     {(currentClient?.name || user?.teamName || 'Test User').charAt(0).toUpperCase()}
                   </span>
                   <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-neo-accent rounded-full border-2 border-slate-900"></div>

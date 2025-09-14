@@ -16,9 +16,11 @@ interface ChartData {
 
 interface AiCoachProps {
   className?: string;
+  anchorRect?: DOMRect | null; // For aligning vertically with a section
+  colorful?: boolean; // Enhanced colorful mode
 }
 
-export function AiCoach({ className = '' }: AiCoachProps) {
+export function AiCoach({ className = '', anchorRect, colorful = false }: AiCoachProps) {
   const [suggestion, setSuggestion] = useState<string>('');
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,13 +30,21 @@ export function AiCoach({ className = '' }: AiCoachProps) {
   const [hasInitialized, setHasInitialized] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
+  // Track if we've already auto-prompted this user (persisted)
+  const [hasPromptedOnce, setHasPromptedOnce] = useState<boolean | null>(null);
+  // Consent state: null = not asked yet, true = granted, false = declined
+  const [hasConsent, setHasConsent] = useState<boolean | null>(null);
   const [showParticles, setShowParticles] = useState(false);
   const [position] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+
   // Removed blinking attention effect state
 
-  const fetchInsight = useCallback(async (forceRefresh = false) => {
+  // Central fetch function; optional bypass to avoid race condition right after granting consent
+  const fetchInsight = useCallback(async (forceRefresh = false, bypassConsent = false) => {
     if (isLoading) return;
+    // Guard unless explicitly bypassed (e.g., immediately after user grants consent before state closure updates)
+    if (!bypassConsent && hasConsent !== true) return; 
     
     setIsLoading(true);
     setIsThinking(true);
@@ -65,18 +75,29 @@ export function AiCoach({ className = '' }: AiCoachProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading]);
+  }, [isLoading, hasConsent]);
 
   const handleIconClick = () => {
+    // If user never granted consent yet (either first time or previously declined) -> open popup.
+    if (hasConsent !== true) {
+      setShowSuggestion(true);
+      setShowWelcome(true);
+      return;
+    }
+    // User granted consent previously. After first session we don't auto-fetch; clicking when closed triggers fetch if none loaded yet.
     if (!showSuggestion && !suggestion && !isLoading) {
       fetchInsight();
-    } else if (suggestion && !showSuggestion) {
-      // Show suggestion and trigger particle effect when clicked
-  setShowSuggestion(true);
-  setShowParticles(true);
-    } else if (suggestion && showSuggestion) {
-      // Toggle visibility if already shown
-      setShowSuggestion(!showSuggestion);
+      setShowSuggestion(true);
+      return;
+    }
+    if (suggestion && !showSuggestion) {
+      setShowSuggestion(true);
+      setShowParticles(true);
+      return;
+    }
+    if (suggestion && showSuggestion) {
+      setShowSuggestion(false);
+      return;
     }
   };
 
@@ -92,21 +113,52 @@ export function AiCoach({ className = '' }: AiCoachProps) {
     setShowSuggestion(false);
   };
 
-  // Initialize with welcome message, then fetch insight but don't auto-show
+  // Load consent & prompted flag from localStorage on mount
   useEffect(() => {
-    if (!hasInitialized) {
-      // Show welcome message first
-      setTimeout(() => {
-        setShowWelcome(true);
-        // Hide welcome and start fetching insight
-        setTimeout(() => {
-          setShowWelcome(false);
-          fetchInsight();
-          setHasInitialized(true);
-        }, 3000); // Show welcome for 3 seconds
-      }, 1500);
+    try {
+      const stored = localStorage.getItem('aiCoachConsent');
+      if (stored === 'granted') setHasConsent(true);
+      else if (stored === 'declined') setHasConsent(false);
+      else setHasConsent(null);
+
+      const prompted = localStorage.getItem('aiCoachPrompted');
+      if (prompted === 'yes') setHasPromptedOnce(true); else setHasPromptedOnce(false);
+    } catch {/* ignore */}
+  }, []);
+
+  // Initial mount: only auto prompt the *first* time ever (when not previously prompted)
+  useEffect(() => {
+    if (!hasInitialized && hasPromptedOnce !== null) {
+      if (!hasPromptedOnce) {
+        // First time user sees the coach -> prompt
+        if (hasConsent !== true) {
+          setShowSuggestion(true);
+          setShowWelcome(true);
+        }
+        try { localStorage.setItem('aiCoachPrompted', 'yes'); } catch {/* ignore */}
+        setHasPromptedOnce(true);
+      }
+      setHasInitialized(true);
     }
-  }, [fetchInsight, hasInitialized]);
+  }, [hasInitialized, hasPromptedOnce, hasConsent]);
+
+  const grantConsent = () => {
+    setHasConsent(true);
+    try { localStorage.setItem('aiCoachConsent', 'granted'); } catch {/* ignore */}
+    // Transition out of welcome and fetch first insight (bypass consent guard to avoid stale closure)
+    setShowWelcome(false);
+    fetchInsight(false, true);
+  };
+  const declineConsent = () => {
+    setHasConsent(false);
+    try { localStorage.setItem('aiCoachConsent', 'declined'); } catch {/* ignore */}
+    setShowWelcome(false);
+    // Close popup since user declined
+    setShowSuggestion(false);
+  };
+
+  // After the first session, we never auto-open again. If user declined before, they can manually click icon to reopen consent popup.
+  // Adjust handleIconClick slightly: if previously declined, clicking re-opens consent/welcome.
 
   return (
     <>
@@ -118,8 +170,15 @@ export function AiCoach({ className = '' }: AiCoachProps) {
       
       {/* Floating AI Coach Icon with enhanced animations and dragging */}
       <motion.div
-        className={`fixed bottom-6 right-6 z-50 ${className}`}
-        style={{ x: position.x, y: position.y }}
+        className={`fixed z-50 ${className}`}
+        style={{
+          x: position.x,
+          y: position.y,
+          // Static anchor relative position (no scroll tracking)
+          top: anchorRect ? `${anchorRect.top + anchorRect.height / 2 - 160}px` : 'auto',
+          bottom: anchorRect ? 'auto' : '1.5rem',
+          right: '1.5rem'
+        }}
         initial={{ scale: 0, rotate: -180 }}
         animate={{ scale: 1, rotate: 0 }}
         transition={{ type: "spring", stiffness: 260, damping: 20, delay: 1 }}
@@ -143,19 +202,39 @@ export function AiCoach({ className = '' }: AiCoachProps) {
             onClick={handleIconClick}
             className={`
               relative w-16 h-16 rounded-full shadow-2xl transition-all duration-500
-              flex items-center justify-center overflow-hidden cursor-pointer
-              ${hasSuggestion 
-                ? 'bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500' 
-                : isThinking
-                ? 'bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500'
-                : 'bg-gradient-to-br from-gray-500 to-gray-600'
-              }
+              flex items-center justify-center overflow-hidden cursor-pointer group
+              ${colorful
+                ? 'bg-slate-900'
+                : hasSuggestion
+                  ? 'bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500'
+                  : isThinking
+                    ? 'bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500'
+                    : 'bg-gradient-to-br from-gray-500 to-gray-600'}
             `}
             disabled={isLoading}
             whileHover={{ scale: isDragging ? 1.1 : 1.05 }}
             whileTap={{ scale: 0.95 }}
             style={{ cursor: isDragging ? 'grabbing' : 'pointer' }}
           >
+            {colorful && (
+              <motion.div
+                className="absolute inset-0 rounded-full p-[2px]"
+                animate={{
+                  background: [
+                    'conic-gradient(from 0deg, #6366f1, #ec4899, #f59e0b, #10b981, #6366f1)',
+                    'conic-gradient(from 180deg, #6366f1, #10b981, #f59e0b, #ec4899, #6366f1)'
+                  ]
+                }}
+                transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+              >
+                <div className="absolute inset-[2px] rounded-full bg-gradient-to-br from-slate-800 via-slate-900 to-black" />
+              </motion.div>
+            )}
+            {colorful && (
+              <div className="absolute -inset-1 rounded-full blur-lg opacity-40 group-hover:opacity-60 transition-opacity" style={{
+                background: 'radial-gradient(circle at 30% 30%, rgba(236,72,153,0.5), transparent 60%)'
+              }} />
+            )}
             {/* Background sparkles */}
             {hasSuggestion && (
               <motion.div
@@ -173,13 +252,10 @@ export function AiCoach({ className = '' }: AiCoachProps) {
 
             <motion.div
               animate={isLoading ? { rotate: 360 } : { rotate: 0 }}
-              transition={{ duration: 2, repeat: isLoading ? Infinity : 0, ease: "linear" }}
+              transition={{ duration: 2, repeat: isLoading ? Infinity : 0, ease: 'linear' }}
+              className="relative"
             >
-              {isThinking ? (
-                <Sparkles className="w-7 h-7 text-white" />
-              ) : (
-                <Bot className="w-7 h-7 text-white" />
-              )}
+              {isThinking ? <Sparkles className="w-7 h-7 text-white" /> : <Bot className="w-7 h-7 text-white" />}
             </motion.div>
             
             {hasSuggestion && !showSuggestion && (
@@ -246,14 +322,13 @@ export function AiCoach({ className = '' }: AiCoachProps) {
         </motion.div>
       </motion.div>
 
-      {/* Compact Inline Suggestion Popup - responsive positioning */}
+  {/* Compact Inline Suggestion Popup - original positioning above icon */}
       <AnimatePresence>
-        {(showSuggestion || showWelcome) && (
+  {(showSuggestion || showWelcome) && (
           <motion.div
-            className="fixed z-40 left-4 right-4 sm:left-auto sm:right-6 sm:w-96 sm:max-w-sm"
+            className={`fixed z-40 left-4 right-4 sm:left-auto sm:right-6 sm:w-96 sm:max-w-sm ${(showSuggestion || showWelcome) ? 'sm:mr-28' : ''}`}
             style={{
-              // Responsive positioning that adapts to screen size
-              bottom: Math.max(24 + 80 - position.y, 100) // Always above the icon with safe margin
+              bottom: Math.max(24 + 80 - position.y, 100)
             }}
             initial={{ opacity: 0, x: 100, y: 20 }}
             animate={{ opacity: 1, x: 0, y: 0 }}
@@ -280,7 +355,7 @@ export function AiCoach({ className = '' }: AiCoachProps) {
               )}
 
               {/* Header */}
-              <div className="flex items-center gap-2 mb-3 relative z-10">
+      <div className="flex items-center gap-2 mb-3 relative z-10">
                 <motion.div
                   className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center"
                   animate={{ rotate: [0, 360] }}
@@ -290,10 +365,10 @@ export function AiCoach({ className = '' }: AiCoachProps) {
                 </motion.div>
                 <div>
                   <h3 className="font-semibold text-gray-900 text-sm">
-                    {showWelcome ? 'AI Financial Coach' : 'AI Financial Insight'}
+                    {showWelcome ? 'AI Financial Coach' : (hasConsent === true ? 'AI Financial Insight' : 'AI Financial Coach')}
                   </h3>
                   <p className="text-xs text-gray-600">
-                    {showWelcome ? 'Just arrived!' : 'Personalized for you'}
+                    {showWelcome ? 'Just arrived!' : (hasConsent === true ? 'Personalized for you' : 'Your preference saved')}
                   </p>
                 </div>
               </div>
@@ -308,8 +383,23 @@ export function AiCoach({ className = '' }: AiCoachProps) {
                   >
                     <div className="bg-white bg-opacity-80 rounded-xl p-3 border border-gray-100">
                       <p className="text-gray-800 text-sm leading-relaxed">
-                        Hi there! 👋 I&apos;m your AI financial coach. Give me a moment to analyze your spending patterns...
+                        Hi there! 👋 I&apos;m your AI financial coach. Give me a moment and we can explore insights together.
+                        <br /><br />Would you like to see AI-generated financial insights now?
                       </p>
+                      <div className="flex gap-2 pt-3">
+                        <button
+                          onClick={grantConsent}
+                          className="flex-1 px-3 py-2 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          Yes
+                        </button>
+                        <button
+                          onClick={declineConsent}
+                          className="px-3 py-2 bg-gray-100 text-gray-700 text-xs rounded-lg hover:bg-gray-200 transition-colors"
+                        >
+                          Not now
+                        </button>
+                      </div>
                     </div>
                     <div className="flex justify-center mt-2">
                       <div className="flex space-x-1">
@@ -317,15 +407,8 @@ export function AiCoach({ className = '' }: AiCoachProps) {
                           <motion.div
                             key={i}
                             className="w-2 h-2 bg-blue-500 rounded-full"
-                            animate={{
-                              scale: [1, 1.2, 1],
-                              opacity: [0.7, 1, 0.7]
-                            }}
-                            transition={{
-                              duration: 0.8,
-                              repeat: Infinity,
-                              delay: i * 0.2
-                            }}
+                            animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
+                            transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.2 }}
                           />
                         ))}
                       </div>
@@ -475,6 +558,21 @@ export function AiCoach({ className = '' }: AiCoachProps) {
                         Got it! 👍
                       </button>
                     </div>
+                  </div>
+                ) : hasConsent === true ? (
+                  // Placeholder state after consent granted but before first suggestion loaded
+                  <div className="py-2 text-xs text-gray-600 flex items-center gap-2">
+                    <div className="flex space-x-1">
+                      {[0, 1, 2].map(i => (
+                        <motion.div
+                          key={i}
+                          className="w-2 h-2 bg-blue-400 rounded-full"
+                          animate={{ scale: [1, 1.4, 1], opacity: [0.6, 1, 0.6] }}
+                          transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+                        />
+                      ))}
+                    </div>
+                    Preparing your personalized insight...
                   </div>
                 ) : null}
               </div>

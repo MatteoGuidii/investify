@@ -143,7 +143,7 @@ export function Dashboard() {
 
         <div className="neo-card p-8 text-center max-w-md relative z-10">
           <div className="text-6xl mb-4">🔐</div>
-          <h2 className="text-xl font-semibold text-white mb-2">
+          <h2 className="text-2xl font-bold text-white mb-3">
             Authentication Required
           </h2>
           <p className="text-gray-400 mb-6">
@@ -168,8 +168,8 @@ export function Dashboard() {
 
         <div className="neo-card p-8 text-center relative z-10">
           <RefreshCw className="w-12 h-12 mx-auto mb-4 animate-spin text-green-400" />
-          <p className="text-white text-lg">Loading your dashboard...</p>
-          <p className="text-gray-400 text-sm mt-2">
+          <p className="text-white text-xl">Loading your dashboard...</p>
+          <p className="text-gray-300 text-base mt-2">
             Fetching your latest portfolio data
           </p>
         </div>
@@ -194,8 +194,8 @@ export function Dashboard() {
               <div className="flex items-center">
                 <div className="text-red-400 text-xl">⚠️</div>
                 <div className="ml-3 flex-1">
-                  <h3 className="text-sm font-medium text-red-300">Error</h3>
-                  <p className="text-sm text-red-200 mt-1">{error}</p>
+                  <h3 className="text-base font-medium text-red-300">Error</h3>
+                  <p className="text-base text-red-200 mt-1">{error}</p>
                 </div>
                 <button
                   onClick={() => setError(null)}
@@ -216,8 +216,8 @@ export function Dashboard() {
                 <h1 className="text-4xl font-bold mb-3 text-transparent bg-clip-text bg-gradient-to-r from-white to-green-200">
                   Welcome back, {currentClient.name}!
                 </h1>
-                <p className="text-gray-300 text-lg">
-                  You're making great progress! Keep up the consistency.
+                <p className="text-gray-200 text-xl">
+                  You&apos;re making great progress! Keep up the consistency.
                 </p>
               </div>
               <div className="flex gap-3">
@@ -326,10 +326,10 @@ export function Dashboard() {
                       </div>
 
                       <div>
-                        <h3 className="font-semibold text-xl mb-2 text-white">
+                        <h3 className="font-bold text-2xl mb-3 text-white">
                           {userGoal.goal.title}
                         </h3>
-                        <p className="text-lg text-green-400 font-medium mb-4">
+                        <p className="text-xl text-green-400 font-medium mb-4">
                           {formatCurrency(userGoal.targetAmount)}
                         </p>
 
@@ -342,7 +342,7 @@ export function Dashboard() {
                               ></div>
                             </div>
                           </div>
-                          <div className="flex justify-between text-sm">
+                          <div className="flex justify-between text-base">
                             <span className="text-green-400 font-medium">
                               {Math.round(progressClamped)}% complete
                             </span>
@@ -367,7 +367,7 @@ export function Dashboard() {
             <div className="text-center py-16">
               <div className="neo-card p-12 max-w-md mx-auto">
                 <div className="text-6xl mb-6">🎯</div>
-                <h3 className="text-2xl font-semibold mb-3 text-white">
+                <h3 className="text-3xl font-bold mb-4 text-white">
                   No Goals Yet
                 </h3>
                 <p className="text-gray-400 mb-8">
@@ -387,7 +387,7 @@ export function Dashboard() {
           {/* Account Summary */}
           {portfolios.length > 0 && (
             <div className="mt-12">
-              <h3 className="text-2xl font-semibold mb-6 text-white">
+              <h3 className="text-3xl font-bold mb-6 text-white">
                 Account Overview
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -400,7 +400,7 @@ export function Dashboard() {
                       Available Cash
                     </h4>
                   </div>
-                  <span className="text-2xl font-bold text-white">
+                  <span className="text-3xl font-bold text-white">
                     {formatCurrency(currentClient?.cash || 0)}
                   </span>
                 </div>
@@ -414,7 +414,7 @@ export function Dashboard() {
                       Total Invested
                     </h4>
                   </div>
-                  <span className="text-2xl font-bold text-white">
+                  <span className="text-3xl font-bold text-white">
                     {formatCurrency(
                       portfolios.reduce((sum, p) => sum + p.invested_amount, 0)
                     )}
@@ -428,7 +428,7 @@ export function Dashboard() {
                     </div>
                     <h4 className="text-white/90 font-medium">Current Value</h4>
                   </div>
-                  <span className="text-2xl font-bold text-white">
+                  <span className="text-3xl font-bold text-white">
                     {formatCurrency(
                       portfolios.reduce((sum, p) => sum + p.current_value, 0)
                     )}
@@ -442,7 +442,7 @@ export function Dashboard() {
                     </div>
                     <h4 className="text-white/90 font-medium">Active Goals</h4>
                   </div>
-                  <span className="text-2xl font-bold text-white">
+                  <span className="text-3xl font-bold text-white">
                     {userGoals.length}
                   </span>
                 </div>

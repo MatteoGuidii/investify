@@ -31,7 +31,8 @@ const PROFILE_COLORS: { [key: string]: string } = {
 export function GoalSetup() {
   const { selectedGoal, setCurrentView, createGoalBasedInvestment, isLoading, error, setError } = useAppStore();
   
-  const [calculationMode, setCalculationMode] = useState<'fixedDate' | 'fixedAmount'>('fixedDate');
+  // Default to 'Target Date' tab, which is now wired to fixedAmount mode after the swap
+  const [calculationMode, setCalculationMode] = useState<'fixedDate' | 'fixedAmount'>('fixedAmount');
   const [monthlyAmount, setMonthlyAmount] = useState(250);
 
   const defaultTargetDate = new Date();
@@ -246,15 +247,18 @@ export function GoalSetup() {
         <div className="neo-card p-4 mb-6">
           <Tabs value={calculationMode} onValueChange={(value) => setCalculationMode(value as 'fixedDate' | 'fixedAmount')}>
             <TabsList className="grid w-full grid-cols-2 bg-black/20 h-9">
-              <TabsTrigger value="fixedDate" className="text-sm data-[state=active]:bg-green-600/20 data-[state=active]:text-green-400">
+              {/* Swap functionality: this button now selects fixedAmount mode */}
+              <TabsTrigger value="fixedAmount" className="text-sm data-[state=active]:bg-green-600/20 data-[state=active]:text-green-400">
                 Target Date
               </TabsTrigger>
-              <TabsTrigger value="fixedAmount" className="text-sm data-[state=active]:bg-green-600/20 data-[state=active]:text-green-400">
+              {/* Swap functionality: this button now selects fixedDate mode */}
+              <TabsTrigger value="fixedDate" className="text-sm data-[state=active]:bg-green-600/20 data-[state=active]:text-green-400">
                 Monthly Amount
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="fixedDate" className="mt-4">
+            {/* Swap: date input now bound to fixedAmount mode */}
+            <TabsContent value="fixedAmount" className="mt-4">
               <div className="space-y-3">
                 <Label htmlFor="target-date" className="text-sm text-gray-300">When do you want to reach this goal?</Label>
                 <div className="flex items-center gap-2">
@@ -270,7 +274,8 @@ export function GoalSetup() {
               </div>
             </TabsContent>
             
-            <TabsContent value="fixedAmount" className="mt-4">
+            {/* Swap: monthly amount input now bound to fixedDate mode */}
+            <TabsContent value="fixedDate" className="mt-4">
               <div className="space-y-3">
                 <Label htmlFor="monthly-amount" className="text-sm text-gray-300">How much can you invest monthly?</Label>
                 <div className="flex items-center gap-2">

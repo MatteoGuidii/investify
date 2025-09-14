@@ -16,9 +16,13 @@ export function AiCoach({ className = '' }: AiCoachProps) {
   const [error, setError] = useState<string>('');
   const [hasInitialized, setHasInitialized] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
+  const [hasConsent, setHasConsent] = useState<boolean | null>(null);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [showConsent, setShowConsent] = useState(false);
 
   const fetchInsight = useCallback(async () => {
     if (isLoading) return;
+    if (hasConsent !== true) return;
     
     setIsLoading(true);
     setIsThinking(true);
@@ -47,9 +51,17 @@ export function AiCoach({ className = '' }: AiCoachProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading]);
+  }, [isLoading, hasConsent]);
 
   const handleIconClick = () => {
+    if (hasConsent === null) {
+      setShowSuggestion(true);
+      return;
+    }
+    if (hasConsent === false) {
+      setShowSuggestion(true);
+      return;
+    }
     if (!showSuggestion && !suggestion && !isLoading) {
       fetchInsight();
     } else if (suggestion) {
@@ -62,15 +74,51 @@ export function AiCoach({ className = '' }: AiCoachProps) {
   };
 
   // Initialize with first insight fetch on component mount
+  // Load consent preference
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('aiCoachConsent');
+      if (stored === 'granted') setHasConsent(true);
+      else if (stored === 'declined') setHasConsent(false);
+    } catch {/* ignore */}
+  }, []);
+
+  // Orchestrate welcome -> consent -> insight
   useEffect(() => {
     if (!hasInitialized) {
-      // Auto-fetch insight after a short delay for better UX
-      setTimeout(() => {
-        fetchInsight();
+      setShowSuggestion(true); // ensure container visible
+      setShowWelcome(true);
+      const welcomeTimer = setTimeout(() => {
+        setShowWelcome(false);
+        if (hasConsent === null) {
+          setShowConsent(true);
+        } else if (hasConsent === true) {
+          fetchInsight();
+        }
         setHasInitialized(true);
-      }, 2000);
+      }, 2200);
+      return () => clearTimeout(welcomeTimer);
     }
-  }, [fetchInsight, hasInitialized]);
+  }, [hasInitialized, hasConsent, fetchInsight]);
+
+  // Fetch after user grants consent while consent screen is open
+  useEffect(() => {
+    if (hasConsent === true && showConsent) {
+      setShowConsent(false);
+      fetchInsight();
+    }
+  }, [hasConsent, showConsent, fetchInsight]);
+
+  const grantConsent = () => {
+    setHasConsent(true);
+    try { localStorage.setItem('aiCoachConsent', 'granted'); } catch {/* ignore */}
+    if (!suggestion) fetchInsight();
+  };
+  const declineConsent = () => {
+    setHasConsent(false);
+    try { localStorage.setItem('aiCoachConsent', 'declined'); } catch {/* ignore */}
+    setShowConsent(false);
+  };
 
   return (
     <>
@@ -213,7 +261,7 @@ export function AiCoach({ className = '' }: AiCoachProps) {
 
       {/* Compact Inline Suggestion Popup */}
       <AnimatePresence>
-        {showSuggestion && (
+  {showSuggestion && (
           <motion.div
             className="fixed bottom-24 right-6 z-40 max-w-sm"
             initial={{ opacity: 0, x: 100, y: 20 }}
@@ -248,14 +296,54 @@ export function AiCoach({ className = '' }: AiCoachProps) {
                   <TrendingUp className="w-4 h-4 text-white" />
                 </motion.div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 text-sm">AI Financial Insight</h3>
-                  <p className="text-xs text-gray-600">Personalized for you</p>
+                  <h3 className="font-semibold text-gray-900 text-sm">{showWelcome ? 'AI Financial Coach' : showConsent ? 'Before We Begin' : (hasConsent === true ? 'AI Financial Insight' : 'AI Financial Coach')}</h3>
+                  <p className="text-xs text-gray-600">{showWelcome ? 'Just arrived!' : showConsent ? 'Do you want insights?' : (hasConsent === true ? 'Educational only' : 'Preference saved')}</p>
                 </div>
               </div>
 
               {/* Content */}
               <div className="relative z-10">
-                {isLoading ? (
+                {showWelcome ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="py-2"
+                  >
+                    <div className="bg-white/90 rounded-xl p-3 border border-gray-100">
+                      <p className="text-gray-800 text-sm leading-relaxed">Hi! 👋 I’m your AI financial coach. Let’s get started.</p>
+                    </div>
+                    <div className="flex justify-center mt-2">
+                      <div className="flex space-x-1">
+                        {[0,1,2].map(i => (
+                          <motion.div key={i} className="w-2 h-2 bg-blue-500 rounded-full" animate={{ scale: [1,1.2,1], opacity:[0.7,1,0.7] }} transition={{ duration:0.8, repeat:Infinity, delay:i*0.2 }} />
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : showConsent ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="py-1"
+                  >
+                    <div className="bg-white/90 rounded-xl p-3 border border-blue-100 space-y-3">
+                      <p className="text-gray-800 text-sm leading-relaxed">
+                        Enable AI generated financial insights? They are educational and not personalized advice.
+                      </p>
+                      <ul className="text-xs text-gray-600 list-disc pl-4 space-y-1">
+                        <li>May be imperfect.</li>
+                        <li>No sensitive data stored.</li>
+                        <li>Not professional advice.</li>
+                      </ul>
+                      <div className="flex gap-2 pt-1">
+                        <button onClick={grantConsent} className="flex-1 px-3 py-2 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-1">
+                          <Sparkles className="w-3 h-3" /> Enable
+                        </button>
+                        <button onClick={declineConsent} className="px-3 py-2 bg-gray-100 text-gray-700 text-xs rounded-lg hover:bg-gray-200 transition-colors">Not now</button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : isLoading ? (
                   <div className="flex items-center space-x-2 py-2">
                     <div className="flex space-x-1">
                       {[0, 1, 2].map((i) => (
