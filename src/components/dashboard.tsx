@@ -294,7 +294,13 @@ export function Dashboard() {
                   <h3 className="text-white/90 font-medium text-sm">Total Saved</h3>
                 </div>
                 <span className="text-2xl font-semibold text-white">
-                  ${Math.round(portfolios.reduce((sum, p) => sum + p.current_value, 0)).toLocaleString()}
+                  ${Math.round(
+                    // Prefer summing across user goals' currentAmount for demo/mock accuracy;
+                    // fall back to portfolios if goals are empty
+                    (userGoals.length > 0
+                      ? userGoals.reduce((sum, g) => sum + (g.currentAmount || 0), 0)
+                      : portfolios.reduce((sum, p) => sum + p.current_value, 0))
+                  ).toLocaleString()}
                 </span>
               </div>
 
@@ -341,16 +347,29 @@ export function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               {(showAllGoals ? userGoals : userGoals.slice(0, 2)).map((userGoal, index) => {
                 const portfolio = portfolios.find(p => p.id === userGoal.portfolioId);
-                const progress = portfolio ? (portfolio.current_value / userGoal.targetAmount) * 100 : 0;
-                const progressClamped = Math.min(progress, 100);
+                const computedProgress = portfolio
+                  ? (portfolio.current_value / userGoal.targetAmount) * 100
+                  : (userGoal.currentAmount / userGoal.targetAmount) * 100;
+                const isCompleted = userGoal.status === 'completed' || computedProgress >= 100;
+                const progressClamped = Math.min(isCompleted ? 100 : computedProgress, 100);
                 
                 return (
-                  <div key={`${userGoal.id}-${index}`} className="neo-card p-4 hover:scale-[1.02] transition-transform">
+                  <div 
+                    key={`${userGoal.id}-${index}`} 
+                    className={`neo-card p-4 hover:scale-[1.02] transition-transform ${isCompleted ? 'border border-green-500/40' : ''}`}
+                  >
                     {/* Goal Image */}
                     <div className="h-20 bg-gradient-to-br from-green-400/20 to-green-600/20 rounded-xl relative mb-4 neo-glass">
                       <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm rounded-xl">
                         <span className="text-3xl">{getCategoryIcon(userGoal.goal.category)}</span>
                       </div>
+                      {isCompleted && (
+                        <div className="absolute top-2 right-2">
+                          <span className="px-2 py-0.5 text-[10px] rounded-full bg-green-500/20 border border-green-400/30 text-green-300 font-semibold">
+                            Completed
+                          </span>
+                        </div>
+                      )}
                     </div>
                     
                     <div>
@@ -367,7 +386,7 @@ export function Dashboard() {
                           </div>
                         </div>
                         <div className="flex justify-between text-xs">
-                          <span className="text-green-400 font-medium">{Math.round(progressClamped)}% complete</span>
+                          <span className="text-green-400 font-medium">{isCompleted ? 'Completed' : `${Math.round(progressClamped)}% complete`}</span>
                           <span className="text-gray-400">
                             {portfolio ? formatCurrency(portfolio.current_value) : formatCurrency(userGoal.currentAmount)}
                           </span>

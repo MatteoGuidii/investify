@@ -11,81 +11,54 @@ export function Rewards() {
   const [rewardsData, setRewardsData] = useState<RewardsData | null>(null);
 
   useEffect(() => {
-    // Mock rewards data - in a real app this would come from an API
-    const mockRewardsData: RewardsData = {
-      avionPoints: {
-        total: 320,
-        description: 'Redeemable for travel, merchandise, or statement credits'
-      },
-      investmentStreak: {
-        months: 12,
-        currentProgress: 12,
-        nextMilestone: 15,
-        completionPercent: 80
-      },
+    // Two mock profiles: default and wrap-ready (demo mode)
+    const defaultData: RewardsData = {
+      avionPoints: { total: 320, description: 'Redeemable for travel, merchandise, or statement credits' },
+      investmentStreak: { months: 12, currentProgress: 12, nextMilestone: 15, completionPercent: 80 },
       discounts: [],
       challenges: [
-        {
-          id: '1',
-          title: 'Consistency Champion',
-          description: 'Make investments for 12 consecutive months',
-          progress: 12,
-          completionPercent: 100,
-          reward: '1,000 Avion Points',
-          icon: 'target'
-        },
-        {
-          id: '2',
-          title: 'Growth Milestone',
-          description: 'Reach $10,000 in total investments',
-          progress: 7500,
-          completionPercent: 75,
-          reward: '2,500 Avion Points',
-          icon: 'trending-up'
-        },
-        {
-          id: '3',
-          title: 'Portfolio Diversifier',
-          description: 'Invest in 3 different goal categories',
-          progress: 2,
-          completionPercent: 67,
-          reward: '500 Avion Points',
-          icon: 'star'
-        }
+        { id: '1', title: 'Consistency Champion', description: 'Make investments for 12 consecutive months', progress: 12, completionPercent: 100, reward: '1,000 Avion Points', icon: 'target' },
+        { id: '2', title: 'Growth Milestone', description: 'Reach $10,000 in total investments', progress: 7500, completionPercent: 75, reward: '2,500 Avion Points', icon: 'trending-up' },
+        { id: '3', title: 'Portfolio Diversifier', description: 'Invest in 3 different goal categories', progress: 2, completionPercent: 67, reward: '500 Avion Points', icon: 'star' }
       ],
       leaderboard: [
-        {
-          rank: 1,
-          name: 'Alex M.',
-          points: 12500,
-          badge: 'Investment Pro',
-          isCurrentUser: false
-        },
-        {
-          rank: 2,
-          name: 'Jordan K.',
-          points: 9800,
-          badge: 'Consistent Saver',
-          isCurrentUser: false
-        },
-        {
-          rank: 3,
-          name: 'You',
-          points: 8200,
-          badge: 'Rising Star',
-          isCurrentUser: true
-        },
-        {
-          rank: 4,
-          name: 'Taylor B.',
-          points: 7500,
-          badge: 'Goal Crusher',
-          isCurrentUser: false
-        }
+        { rank: 1, name: 'Alex M.', points: 12500, badge: 'Investment Pro', isCurrentUser: false },
+        { rank: 2, name: 'Jordan K.', points: 9800, badge: 'Consistent Saver', isCurrentUser: false },
+        { rank: 3, name: 'You', points: 8200, badge: 'Rising Star', isCurrentUser: true },
+        { rank: 4, name: 'Taylor B.', points: 7500, badge: 'Goal Crusher', isCurrentUser: false }
       ]
     };
 
-    setRewardsData(mockRewardsData);
+    const wrapReadyData: RewardsData = {
+      avionPoints: { total: 10420, description: 'Redeemable for travel, merchandise, or statement credits' },
+      investmentStreak: { months: 18, currentProgress: 18, nextMilestone: 24, completionPercent: 75 },
+      discounts: [
+        { id: 'd1', title: 'Partner Travel Deal', provider: 'Air Canada', discountText: 'Save 10% on select flights', expiryDate: '2025-12-31', category: 'travel' }
+      ],
+      challenges: [
+        { id: '1', title: 'Consistency Champion', description: 'Make investments for 12 consecutive months', progress: 12, completionPercent: 100, reward: '1,000 Avion Points', icon: 'target' },
+        { id: '2', title: 'Growth Milestone', description: 'Reach $10,000 in total investments', progress: 10000, completionPercent: 100, reward: '2,500 Avion Points', icon: 'trending-up' },
+        { id: '3', title: 'Portfolio Diversifier', description: 'Invest in 3 different goal categories', progress: 3, completionPercent: 100, reward: '500 Avion Points', icon: 'star' }
+      ],
+      leaderboard: [
+        { rank: 1, name: 'You', points: 15800, badge: 'Wrap Legend', isCurrentUser: true },
+        { rank: 2, name: 'Alex M.', points: 12500, badge: 'Investment Pro', isCurrentUser: false },
+        { rank: 3, name: 'Jordan K.', points: 9800, badge: 'Consistent Saver', isCurrentUser: false },
+        { rank: 4, name: 'Taylor B.', points: 7500, badge: 'Goal Crusher', isCurrentUser: false }
+      ]
+    };
+
+    try {
+      const isDemo = typeof window !== 'undefined' && localStorage.getItem('demo_mode') === 'true';
+      const profile = typeof window !== 'undefined' && localStorage.getItem('demo_rewards_profile');
+      if (isDemo && profile === 'wrap_ready') {
+        setRewardsData(wrapReadyData);
+      } else {
+        setRewardsData(defaultData);
+      }
+    } catch {
+      setRewardsData(defaultData);
+    }
   }, []);
 
   const getChallengeIcon = (iconName: string) => {

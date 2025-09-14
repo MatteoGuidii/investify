@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { UserGoal, Goal, AppUser, Client } from './types';
+import { GOAL_CATALOGUE } from './goals-data';
 import { apiService } from './api';
 
 interface AppState {
@@ -334,9 +335,9 @@ export const useAppStore = create<AppState>()(
         setLoading(true);
         setError(null);
 
-        const testEmail = `test-${Date.now()}@goals.app`;
-        const testTeamName = `test-team-${Date.now()}`;
-        const testClientName = 'Test User';
+        const testEmail = `hamudy-${Date.now()}@goals.app`;
+        const testTeamName = `hamudy-team-${Date.now()}`;
+        const testClientName = 'Hamudy';
         const testInitialCash = 50000;
 
         // Logout any existing user to ensure a clean test session
@@ -358,7 +359,76 @@ export const useAppStore = create<AppState>()(
         const clientSuccess = await createClient(testClientName, testEmail, testInitialCash);
 
         if (clientSuccess) {
-          setCurrentView('catalogue');
+          // Mark demo profile as wrap-ready so UI can show completed challenges, etc.
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('demo_mode', 'true');
+              localStorage.setItem('demo_rewards_profile', 'wrap_ready');
+            } catch (e) {
+              console.warn('Failed to persist demo flags', e);
+            }
+          }
+
+          // Seed some wrap-ready demo goals to make the dashboard lively
+          try {
+            const seedGoals: Array<{
+              id: string;
+              monthly: number;
+              saved: number;
+              status: 'active' | 'paused' | 'completed';
+              backdatedMonths?: number; // to backdate createdAt
+            }> = [
+              // Active goals with strong progress
+              { id: 'vacation-europe', monthly: 300, saved: 3200, status: 'active', backdatedMonths: 10 },
+              { id: 'new-laptop', monthly: 200, saved: 2000, status: 'completed', backdatedMonths: 6 },
+              { id: 'emergency-fund', monthly: 220, saved: 3800, status: 'active', backdatedMonths: 12 },
+              // Additional flavor goals
+              { id: 'concert-tickets', monthly: 125, saved: 1000, status: 'completed', backdatedMonths: 4 },
+              { id: 'home-deposit', monthly: 600, saved: 6000, status: 'active', backdatedMonths: 8 },
+            ];
+
+            const goalsMap: Record<string, Goal> = Object.fromEntries(
+              GOAL_CATALOGUE.map(g => [g.id, g])
+            );
+
+            seedGoals.forEach((g, idx) => {
+              const goal = goalsMap[g.id];
+              if (!goal) return;
+              const targetAmount = goal.finalPrice;
+              const isCompleted = g.status === 'completed' || g.saved >= targetAmount;
+              const createdAt = new Date(Date.now() - (g.backdatedMonths ?? 6) * 30 * 24 * 60 * 60 * 1000);
+              const currentAmount = isCompleted ? targetAmount : Math.min(g.saved, Math.max(targetAmount * 0.15, targetAmount * 0.85));
+              const userGoal: UserGoal = {
+                id: `demo-goal-${idx}-${Date.now()}`,
+                goalId: goal.id,
+                goal,
+                clientId: get().currentClient!.id,
+                targetAmount,
+                monthlyContribution: g.monthly,
+                targetDate: new Date(Date.now() + goal.estimatedMonths * 30 * 24 * 60 * 60 * 1000),
+                currentAmount,
+                progressPercent: Math.min(100, (currentAmount / targetAmount) * 100),
+                projectedCompletion: isCompleted
+                  ? new Date(Date.now() - 20 * 24 * 60 * 60 * 1000)
+                  : new Date(Date.now() + (goal.estimatedMonths - 2) * 30 * 24 * 60 * 60 * 1000),
+                status: isCompleted ? 'completed' : g.status,
+                createdAt,
+                milestones: [
+                  { id: `ms-10-${idx}`, title: 'First Steps', targetPercent: 10, targetAmount: targetAmount * 0.1, achieved: true, achievedDate: new Date(createdAt.getTime() + 20 * 24 * 60 * 60 * 1000), reward: '500 Avion Points' },
+                  { id: `ms-25-${idx}`, title: 'Quarter Way', targetPercent: 25, targetAmount: targetAmount * 0.25, achieved: true, achievedDate: new Date(createdAt.getTime() + 60 * 24 * 60 * 60 * 1000), reward: '1,000 Avion Points' },
+                  { id: `ms-50-${idx}`, title: 'Halfway Hero', targetPercent: 50, targetAmount: targetAmount * 0.5, achieved: (currentAmount / targetAmount) >= 0.5 || isCompleted, achievedDate: isCompleted ? new Date(createdAt.getTime() + 90 * 24 * 60 * 60 * 1000) : undefined, reward: '2,500 Avion Points + $25 Gift Card' },
+                  // Completion marker if applicable
+                  ...(isCompleted ? [{ id: `ms-100-${idx}`, title: 'Goal Achieved!', targetPercent: 100, targetAmount: targetAmount, achieved: true, achievedDate: new Date(createdAt.getTime() + 120 * 24 * 60 * 60 * 1000), reward: `${goal.discountPercent}% Partner Discount + 10,000 Avion Points` }] as any : []),
+                ],
+              };
+              get().addUserGoal(userGoal);
+            });
+          } catch (e) {
+            console.warn('Failed to seed demo goals', e);
+          }
+
+          // Land on dashboard for demo
+          setCurrentView('dashboard');
         } 
         // Error is handled by createClient
 
@@ -385,9 +455,61 @@ export const useAppStore = create<AppState>()(
               if (storedClient) {
                 const client: Client = JSON.parse(storedClient);
                 setCurrentClient(client);
-                setCurrentView('catalogue'); // Always start with catalogue for goal-first approach
+                // If demo flags are present, land on dashboard to showcase wrap-ready state
+                const demo = localStorage.getItem('demo_mode') === 'true';
+                const profile = localStorage.getItem('demo_rewards_profile');
+                setCurrentView(demo && profile === 'wrap_ready' ? 'dashboard' : 'catalogue');
+
+                // If demo and no goals seeded yet (fresh reload), seed again for consistency
+                if (demo && profile === 'wrap_ready' && get().userGoals.length === 0) {
+                  try {
+                    const goalsMap: Record<string, Goal> = Object.fromEntries(
+                      GOAL_CATALOGUE.map(g => [g.id, g])
+                    );
+                    const seed: Array<{ id: string; monthly: number; saved: number; status: 'active' | 'paused' | 'completed'; backdatedMonths?: number; }> = [
+                      { id: 'vacation-europe', monthly: 300, saved: 3200, status: 'active', backdatedMonths: 10 },
+                      { id: 'new-laptop', monthly: 200, saved: 2000, status: 'completed', backdatedMonths: 6 },
+                      { id: 'emergency-fund', monthly: 220, saved: 3800, status: 'active', backdatedMonths: 12 },
+                      { id: 'concert-tickets', monthly: 125, saved: 1000, status: 'completed', backdatedMonths: 4 },
+                      { id: 'home-deposit', monthly: 600, saved: 6000, status: 'active', backdatedMonths: 8 },
+                    ];
+                    seed.forEach((g, idx) => {
+                      const goal = goalsMap[g.id];
+                      if (!goal) return;
+                      const targetAmount = goal.finalPrice;
+                      const isCompleted = g.status === 'completed' || g.saved >= targetAmount;
+                      const createdAt = new Date(Date.now() - (g.backdatedMonths ?? 6) * 30 * 24 * 60 * 60 * 1000);
+                      const currentAmount = isCompleted ? targetAmount : Math.min(g.saved, Math.max(targetAmount * 0.15, targetAmount * 0.85));
+                      const userGoal: UserGoal = {
+                        id: `demo-goal-${idx}-${Date.now()}`,
+                        goalId: goal.id,
+                        goal,
+                        clientId: get().currentClient!.id,
+                        targetAmount,
+                        monthlyContribution: g.monthly,
+                        targetDate: new Date(Date.now() + goal.estimatedMonths * 30 * 24 * 60 * 60 * 1000),
+                        currentAmount,
+                        progressPercent: Math.min(100, (currentAmount / targetAmount) * 100),
+                        projectedCompletion: isCompleted ? new Date(Date.now() - 20 * 24 * 60 * 60 * 1000) : new Date(Date.now() + (goal.estimatedMonths - 2) * 30 * 24 * 60 * 60 * 1000),
+                        status: isCompleted ? 'completed' : g.status,
+                        createdAt,
+                        milestones: [
+                          { id: `ms-10-${idx}`, title: 'First Steps', targetPercent: 10, targetAmount: targetAmount * 0.1, achieved: true, achievedDate: new Date(createdAt.getTime() + 20 * 24 * 60 * 60 * 1000), reward: '500 Avion Points' },
+                          { id: `ms-25-${idx}`, title: 'Quarter Way', targetPercent: 25, targetAmount: targetAmount * 0.25, achieved: true, achievedDate: new Date(createdAt.getTime() + 60 * 24 * 60 * 60 * 1000), reward: '1,000 Avion Points' },
+                          { id: `ms-50-${idx}`, title: 'Halfway Hero', targetPercent: 50, targetAmount: targetAmount * 0.5, achieved: (currentAmount / targetAmount) >= 0.5 || isCompleted, achievedDate: isCompleted ? new Date(createdAt.getTime() + 90 * 24 * 60 * 60 * 1000) : undefined, reward: '2,500 Avion Points + $25 Gift Card' },
+                          ...(isCompleted ? [{ id: `ms-100-${idx}`, title: 'Goal Achieved!', targetPercent: 100, targetAmount: targetAmount, achieved: true, achievedDate: new Date(createdAt.getTime() + 120 * 24 * 60 * 60 * 1000), reward: `${goal.discountPercent}% Partner Discount + 10,000 Avion Points` }] as any : []),
+                        ],
+                      };
+                      get().addUserGoal(userGoal);
+                    });
+                  } catch (e) {
+                    console.warn('Failed to seed demo goals on init', e);
+                  }
+                }
               } else {
-                setCurrentView('catalogue');
+                const demo = localStorage.getItem('demo_mode') === 'true';
+                const profile = localStorage.getItem('demo_rewards_profile');
+                setCurrentView(demo && profile === 'wrap_ready' ? 'dashboard' : 'catalogue');
               }
             } else {
               // Token expired, clear storage
