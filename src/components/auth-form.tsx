@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useAppStore } from '../lib/store';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
+import { useState } from "react";
+import { useAppStore } from "../lib/store";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 
 export function AuthForm() {
-  const [email, setEmail] = useState('');
-  const [clientName, setClientName] = useState('');
+  const [email, setEmail] = useState("");
+  const [clientName, setClientName] = useState("");
   const [initialCash, setInitialCash] = useState(10000);
 
-  const { 
-    registerTeam, 
-    createClient, 
-    setCurrentView, 
-    isLoading, 
-    error, 
+  const {
+    registerTeam,
+    createClient,
+    setCurrentView,
+    isLoading,
+    error,
     user,
-    loginAsTestUser
+    loginAsTestUser,
   } = useAppStore();
 
   const handleTestLogin = async () => {
@@ -27,18 +27,18 @@ export function AuthForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       // Register team with a default name (using email prefix)
-      const defaultTeamName = email.split('@')[0] + '-team';
+      const defaultTeamName = email.split("@")[0] + "-team";
       const teamSuccess = await registerTeam(defaultTeamName, email);
       if (!teamSuccess) return;
     }
-    
+
     // Create client
     const clientSuccess = await createClient(clientName, email, initialCash);
     if (clientSuccess) {
-      setCurrentView('catalogue');
+      setCurrentView("catalogue");
     }
   };
 
@@ -68,16 +68,16 @@ export function AuthForm() {
             </div>
 
             <h2 className="text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-              Future of
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600 block">
+              Future of{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600">
                 Goal-Based
-              </span>
+              </span>{" "}
               <span className="text-white">Investing</span>
             </h2>
-            
+
             <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-              Experience next-generation portfolio management with AI-powered insights, 
-              real-time tracking, and seamless goal achievement.
+              Experience next-generation portfolio management with AI-powered
+              insights, real-time tracking, and seamless goal achievement.
             </p>
 
             {/* Stats */}
@@ -98,12 +98,12 @@ export function AuthForm() {
 
             {/* Video */}
             <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl neo-glass border border-white/10">
-              <iframe 
+              <iframe
                 className="w-full h-full"
                 src="https://www.youtube.com/embed/gQNfSRC8Rb0"
-                title="NexaGoals Demo" 
-                frameBorder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                title="NexaGoals Demo"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
               ></iframe>
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
@@ -124,7 +124,9 @@ export function AuthForm() {
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <Label htmlFor="email" className="text-white font-medium">Email Address</Label>
+                  <Label htmlFor="email" className="text-white font-medium">
+                    Email Address
+                  </Label>
                   <Input
                     id="email"
                     type="email"
@@ -137,7 +139,12 @@ export function AuthForm() {
                 </div>
 
                 <div>
-                  <Label htmlFor="clientName" className="text-white font-medium">Full Name</Label>
+                  <Label
+                    htmlFor="clientName"
+                    className="text-white font-medium"
+                  >
+                    Full Name
+                  </Label>
                   <Input
                     id="clientName"
                     type="text"
@@ -150,7 +157,12 @@ export function AuthForm() {
                 </div>
 
                 <div>
-                  <Label htmlFor="initialCash" className="text-white font-medium">Starting Investment</Label>
+                  <Label
+                    htmlFor="initialCash"
+                    className="text-white font-medium"
+                  >
+                    Starting Investment
+                  </Label>
                   <Input
                     id="initialCash"
                     type="number"
@@ -172,12 +184,14 @@ export function AuthForm() {
                   </div>
                 )}
 
-                <Button 
-                  type="submit" 
-                  className="w-full neo-button text-white font-semibold py-3 rounded-xl" 
+                <Button
+                  type="submit"
+                  className="w-full neo-button text-white font-semibold py-3 rounded-xl"
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Setting up your account...' : 'Start Your Journey →'}
+                  {isLoading
+                    ? "Setting up your account..."
+                    : "Start Your Journey →"}
                 </Button>
 
                 <div className="relative">
@@ -189,19 +203,20 @@ export function AuthForm() {
                   </div>
                 </div>
 
-                <Button 
+                <Button
                   type="button"
-                  variant="outline" 
-                  className="w-full bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/30 py-3 rounded-xl" 
+                  variant="outline"
+                  className="w-full bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/30 py-3 rounded-xl"
                   onClick={handleTestLogin}
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Accessing...' : '🚀 Try Demo Mode'}
+                  {isLoading ? "Accessing..." : "🚀 Try Demo Mode"}
                 </Button>
               </form>
 
               <p className="text-center text-xs text-gray-500 mt-6">
-                By continuing, you agree to our Terms of Service and Privacy Policy
+                By continuing, you agree to our Terms of Service and Privacy
+                Policy
               </p>
             </div>
           </div>

@@ -1,22 +1,18 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  display: 'swap',
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
-  subsets: ["latin"],
-  display: 'swap',
+  display: "swap",
+  fallback: ["system-ui", "arial"],
 });
 
 export const metadata: Metadata = {
   title: "Investify",
-  description: "Experience the next generation of goal-based investing with AI-powered insights and seamless portfolio management.",
+  description:
+    "Experience the next generation of goal-based investing with AI-powered insights and seamless portfolio management.",
 };
 
 export default function RootLayout({
@@ -29,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} antialiased font-sans bg-neo-dark text-white`}
+        className={`${inter.variable} antialiased font-sans bg-neo-dark text-white`}
       >
         {children}
       </body>
