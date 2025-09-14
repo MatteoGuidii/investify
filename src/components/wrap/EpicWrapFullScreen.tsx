@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { useEffect } from "react";
 import {
   X,
   Share2,
@@ -88,6 +89,17 @@ export function EpicWrapFullScreen({
     return null;
   };
 
+  // Lock background scroll when open
+  useEffect(() => {
+    if (isOpen) {
+      const original = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = original;
+      };
+    }
+  }, [isOpen]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -97,10 +109,11 @@ export function EpicWrapFullScreen({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          {/* Cinematic gradient backdrop with subtle grid */}
-          <div className="absolute inset-0 bg-gradient-to-br from-neo-dark via-[#0B1220] to-[#0E1B2A]" />
-          <div className="absolute inset-0 backdrop-blur-[2px]" />
-          <div className="absolute inset-0 opacity-[0.07] [background-image:radial-gradient(circle_at_1px_1px,#8b5cf6_1px,transparent_1px)] [background-size:24px_24px]" />
+          {/* Backdrop layers (more opaque) */}
+          <div className="absolute inset-0 bg-[#05070c]/90" />
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/40 via-[#0B1220]/60 to-blue-900/40" />
+          <div className="absolute inset-0 backdrop-blur-md" />
+          <div className="absolute inset-0 opacity-[0.08] [background-image:radial-gradient(circle_at_1px_1px,#6366f1_1px,transparent_1px)] [background-size:26px_26px]" />
 
           {/* Content container */}
           <motion.div
@@ -116,8 +129,8 @@ export function EpicWrapFullScreen({
             <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/10 bg-black/30 backdrop-blur-xl">
               <div className="flex-1" />
               <div className="text-center">
-                <h1 className="text-2xl md:text-3xl font-bold text-white tracking-wide">
-                  Your 2025 Wrap ✨
+                <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 via-purple-300 to-sky-300 drop-shadow-[0_0_10px_rgba(99,102,241,0.25)]">
+                  Investify Wrapped
                 </h1>
               </div>
               <div className="flex gap-2 flex-1 justify-end">
@@ -161,22 +174,31 @@ export function EpicWrapFullScreen({
                 <div className="flex items-center space-x-2 mb-4">
                   <Trophy className="w-5 h-5 text-yellow-400" />
                   <h2 className="text-xl font-semibold text-white">
-                    Your Summary
+                    Your Wrapped Summary
                   </h2>
                 </div>
 
-                {/* Top highlighted roboadvisor return */}
-                <div className="bg-gradient-to-br from-green-900/30 to-green-800/30 rounded-xl p-6 mb-6 border border-green-700/50 text-center">
-                  <div className="flex items-center justify-center space-x-4 mb-2">
-                    <div className="text-4xl font-bold text-green-400">
-                      $1,870
+                {/* Hero: Roboadvisor Return */}
+                <div className="relative mb-8">
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-green-500/10 via-emerald-400/5 to-teal-400/10 blur-xl" />
+                  <div className="relative rounded-2xl border border-green-500/30 bg-gradient-to-br from-green-900/40 via-green-800/30 to-emerald-900/30 backdrop-blur-sm p-8 flex flex-col items-center text-center shadow-inner">
+                    <span className="text-[11px] tracking-wider uppercase text-green-200/70 mb-3">
+                      Roboadvisor Performance
+                    </span>
+                    <div className="flex items-end gap-4 mb-4 flex-wrap justify-center">
+                      <span className="text-5xl md:text-6xl font-bold leading-none text-green-300 drop-shadow-sm">
+                        {formatCurrency(kpis.roboAdvisorReturnAbs)}
+                      </span>
+                      <span
+                        className={`px-3 py-1 rounded-md text-sm font-semibold flex items-center gap-1 ${kpis.roboAdvisorReturnPct >= 0 ? "bg-green-500/15 text-green-300" : "bg-red-500/15 text-red-300"}`}
+                      >
+                        {kpis.roboAdvisorReturnPct >= 0 ? "▲" : "▼"}{" "}
+                        {formatPercent(kpis.roboAdvisorReturnPct)}
+                      </span>
                     </div>
-                    <div className="text-2xl font-semibold text-green-300">
-                      12.4%
-                    </div>
-                  </div>
-                  <div className="text-lg text-green-400">
-                    Total return from roboadvisor
+                    <p className="text-sm md:text-base text-green-200/80 max-w-md">
+                      Total return generated by automated investing this period.
+                    </p>
                   </div>
                 </div>
 
@@ -186,14 +208,18 @@ export function EpicWrapFullScreen({
                     <div className="text-sm text-white/70 mb-1">
                       Amount Invested
                     </div>
-                    <div className="text-2xl font-bold text-white">$12,450</div>
+                    <div className="text-2xl font-bold text-white">
+                      {formatCurrency(kpis.totalInvested)}
+                    </div>
                   </div>
 
                   <div className="neo-glass p-4 rounded-xl">
                     <div className="text-sm text-white/70 mb-1">
                       Total Saved
                     </div>
-                    <div className="text-2xl font-bold text-white">$3,200</div>
+                    <div className="text-2xl font-bold text-white">
+                      {formatCurrency(kpis.totalSaved)}
+                    </div>
                   </div>
 
                   <div className="neo-glass p-4 rounded-xl">
@@ -201,7 +227,7 @@ export function EpicWrapFullScreen({
                       Saving Streak
                     </div>
                     <div className="text-2xl font-bold text-white">
-                      18 weeks
+                      {kpis.savingStreakWeeks} weeks
                     </div>
                   </div>
 
@@ -209,7 +235,9 @@ export function EpicWrapFullScreen({
                     <div className="text-sm text-white/70 mb-1">
                       Fees Avoided
                     </div>
-                    <div className="text-2xl font-bold text-white">$146</div>
+                    <div className="text-2xl font-bold text-white">
+                      {formatCurrency(kpis.feesAvoided)}
+                    </div>
                     <div className="text-xs text-white/50">
                       Estimated brokerage fees saved
                     </div>
@@ -219,14 +247,18 @@ export function EpicWrapFullScreen({
                     <div className="text-sm text-white/70 mb-1">
                       Auto-Invest Success Rate
                     </div>
-                    <div className="text-2xl font-bold text-white">92%</div>
+                    <div className="text-2xl font-bold text-white">
+                      {kpis.autoInvestSuccessRatePct}%
+                    </div>
                   </div>
 
                   <div className="neo-glass p-4 rounded-xl">
                     <div className="text-sm text-white/70 mb-1">
                       Diversification Score
                     </div>
-                    <div className="text-2xl font-bold text-white">78/100</div>
+                    <div className="text-2xl font-bold text-white">
+                      {kpis.diversificationScore}/100
+                    </div>
                     <div className="text-xs text-white/50">
                       Portfolio balance across asset classes
                     </div>

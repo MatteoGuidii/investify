@@ -112,7 +112,7 @@ export function Dashboard() {
       case 'car': return '🚗';
       case 'home': return '🏠';
       case 'experience': return '🎵';
-      case 'lifestyle': return '💰';
+      case 'clothing': return '💰';
       default: return '🎯';
     }
   };

@@ -187,7 +187,7 @@ export function Dashboard() {
         return "🏠";
       case "experience":
         return "🎵";
-      case "lifestyle":
+      case "clothing":
         return "💰";
       default:
         return "🎯";
@@ -297,7 +297,7 @@ export function Dashboard() {
                   className="text-xs px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 hover:text-purple-100 border-purple-400/40 hover:border-purple-300/60 transition-all duration-200 rounded-lg"
                 >
                   <span className="mr-1.5">🎉</span>
-                  View Wrap
+                  View Wrapped
                 </Button>
                 <Button
                   variant="outline"

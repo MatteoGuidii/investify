@@ -28,7 +28,7 @@ export interface WrapTimeseriesPoint {
 }
 
 export interface EpicWrap {
-  periodLabel: string;            // e.g. "Your 2025 Wrap"
+  periodLabel: string;            // e.g. "Your 2025 Wrapped"
   userFirstName: string;
   kpis: WrapKpis;
   timeline: WrapTimeseriesPoint[]; // for mini area chart

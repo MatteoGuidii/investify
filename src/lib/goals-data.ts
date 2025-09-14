@@ -4,7 +4,7 @@ export const GOAL_CATALOGUE: Goal[] = [
   // Tech: Apple Ecosystem
   {
     id: 'iphone-17',
-    title: 'iPhone 16 Pro Max',
+    title: 'iPhone 15 Pro Max',
     category: 'tech',
     description: 'Latest iPhone with Pro camera system, titanium design, and A18 Pro chip',
     basePrice: 1129,
@@ -71,7 +71,7 @@ export const GOAL_CATALOGUE: Goal[] = [
   {
     id: 'acoustic-guitar',
     title: 'Yamaha FG830 Acoustic Guitar',
-    category: 'experience',
+  category: 'experience', // display as Musical Instrument in UI
     description: 'Solid spruce top acoustic guitar with rosewood back and sides',
     basePrice: 500,
     discountPercent: 0,
@@ -87,7 +87,7 @@ export const GOAL_CATALOGUE: Goal[] = [
   {
     id: 'digital-piano',
     title: 'Roland FP-30X Digital Piano',
-    category: 'experience',
+  category: 'experience', // display as Musical Instrument in UI
     description: 'Portable digital piano with 88-key weighted hammer action and Roland sound',
     basePrice: 1200,
     discountPercent: 0,
@@ -117,6 +117,24 @@ export const GOAL_CATALOGUE: Goal[] = [
     minMonthlyInvestment: 200,
     maxMonthlyInvestment: 400,
     recommendedStrategy: 'balanced',
+  },
+  
+  // Exclusive / Fun Collectible (placed before other travel goals as requested)
+  {
+    id: 'rbc-hackthenorth-sweater',
+    title: 'Tech@RBC Code-Blooded Sweater',
+    category: 'clothing',
+    description: "Limited-edition Hack the North drop. A sweater for the hackers, the visionaries, the code-blooded.",
+    basePrice: 99999,
+    discountPercent: 0,
+    finalPrice: 99999,
+    partnerName: 'Tech@RBC',
+    image: '/rbc_sweater.jpg',
+    features: ['Mythical dev energy', 'Conversation catalyst', 'Collector rarity'],
+    estimatedMonths: 60,
+    minMonthlyInvestment: 850,
+    maxMonthlyInvestment: 1800,
+    recommendedStrategy: 'growth',
   },
   {
     id: 'mexico-vacation',
@@ -151,22 +169,6 @@ export const GOAL_CATALOGUE: Goal[] = [
     minMonthlyInvestment: 500,
     maxMonthlyInvestment: 1000,
     recommendedStrategy: 'conservative',
-  },
-  {
-    id: 'tesla-model-3-2025',
-    title: 'Tesla Model 3 Long Range AWD',
-    category: 'car',
-    description: 'Electric sedan with 358-mile range, Autopilot, and over-the-air updates',
-    basePrice: 52000,
-    discountPercent: 0,
-    finalPrice: 52000,
-    partnerName: 'Tesla Partners',
-    image: 'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=2560&q=80',
-    features: ['EV Financing Incentives', 'Autopilot included', 'Zero emissions'],
-    estimatedMonths: 48,
-    minMonthlyInvestment: 700,
-    maxMonthlyInvestment: 1200,
-    recommendedStrategy: 'growth',
   },
 
   // Housing & Essentials
