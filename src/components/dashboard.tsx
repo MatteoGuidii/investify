@@ -7,6 +7,10 @@ import { Button } from './ui/button';
 import { PlusCircle, RefreshCw, Wallet } from 'lucide-react';
 import { Portfolio } from '../lib/types';
 import { AiCoach } from './ai-coach';
+import { EpicWrapCard } from './wrap/EpicWrapCard';
+import { EpicWrapSlideOver } from './wrap/EpicWrapSlideOver';
+import { useLocalDismiss } from '../hooks/useLocalDismiss';
+import { EpicWrap } from '../lib/wrap/types';
 
 export function Dashboard() {
   const { 
@@ -22,6 +26,48 @@ export function Dashboard() {
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showAllGoals, setShowAllGoals] = useState(false);
+  
+  // Epic Wrap state
+  const [wrapData, setWrapData] = useState<EpicWrap | null>(null);
+  const [showWrapSlideOver, setShowWrapSlideOver] = useState(false);
+  const [wrapDismissed, dismissWrap] = useLocalDismiss('wrap_2025_dismissed');
+
+  // Load Epic Wrap data
+  const loadWrapData = async () => {
+    try {
+      const response = await fetch('/api/wrap');
+      if (response.ok) {
+        const data = await response.json();
+        setWrapData(data);
+      }
+    } catch (error) {
+      console.warn('Failed to load wrap data:', error);
+    }
+  };
+
+  // Epic Wrap handlers
+  const handleViewWrapDetails = () => {
+    setShowWrapSlideOver(true);
+  };
+
+  const handleDismissWrap = () => {
+    dismissWrap();
+  };
+
+  const handleShareWrap = () => {
+    // Copy link to clipboard
+    const url = `${window.location.origin}/wrap/2025`;
+    navigator.clipboard.writeText(url).then(() => {
+      console.log('Wrap link copied to clipboard');
+    }).catch(() => {
+      console.warn('Failed to copy wrap link');
+    });
+  };
+
+  const handleDownloadWrap = () => {
+    // TODO: Implement image download functionality
+    console.log('Download wrap image - TODO: implement');
+  };
 
   const loadData = async () => {
     if (!currentClient) {
@@ -43,6 +89,9 @@ export function Dashboard() {
     
     try {
       console.log(`Loading data for client: ${currentClient.id}`);
+      
+      // Load Epic Wrap data (don't block on this)
+      loadWrapData();
       
       // Get updated client data with current cash balance
       const clientResponse = await apiService.getClient(currentClient.id);
@@ -199,6 +248,14 @@ export function Dashboard() {
               <div className="flex gap-2">
                 <Button 
                   variant="outline" 
+                  onClick={() => { setError(null); loadWrapData(); setShowWrapSlideOver(true); }} 
+                  className="neo-button-secondary text-xs px-3 py-1.5"
+                >
+                  <span className="mr-1.5">🎉</span>
+                  View Wrap
+                </Button>
+                <Button 
+                  variant="outline" 
                   onClick={() => { setError(null); loadData(); }} 
                   disabled={isRefreshing} 
                   className="neo-button-secondary text-xs px-3 py-1.5"
@@ -237,6 +294,18 @@ export function Dashboard() {
             </div>
           </div>
         </div>
+
+        {/* Epic Wrap Section */}
+        {wrapData && !wrapDismissed && (
+          <div className="max-w-6xl mx-auto mb-6">
+            <EpicWrapCard
+              wrap={wrapData}
+              onViewDetails={handleViewWrapDetails}
+              onDismiss={handleDismissWrap}
+              onShare={handleShareWrap}
+            />
+          </div>
+        )}
 
         {/* Your Goals Section */}
         <div className="max-w-6xl mx-auto">
@@ -376,6 +445,17 @@ export function Dashboard() {
 
       {/* AI Coach floating assistant */}
       <AiCoach />
+
+      {/* Epic Wrap Slide Over */}
+      {wrapData && (
+        <EpicWrapSlideOver
+          wrap={wrapData}
+          isOpen={showWrapSlideOver}
+          onClose={() => setShowWrapSlideOver(false)}
+          onShare={handleShareWrap}
+          onDownload={handleDownloadWrap}
+        />
+      )}
     </div>
   );
 }
