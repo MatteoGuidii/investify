@@ -5,7 +5,7 @@ import { useAppStore } from '@/lib/store';
 import { GoalCatalogue } from '@/components/goal-catalogue';
 import { GoalSetup } from '@/components/goal-setup-clean';
 import { Dashboard } from '@/components/dashboard';
-import { Rewards } from '@/components/rewards';
+import { Rewards } from '@/components/rewards-new';
 import { Header } from '@/components/header';
 import { AuthForm } from '@/components/auth-form';
 

@@ -5,7 +5,6 @@ import { useAppStore } from '../lib/store';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { Switch } from '@/components/ui/switch';
 import { ArrowLeft, TrendingUp, Calendar, DollarSign } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { RISK_PROFILES, RiskProfile } from '../lib/risk-profiles';
@@ -40,8 +39,7 @@ export function GoalSetup() {
 
   const [targetDate, setTargetDate] = useState(defaultTargetDate.toISOString().split('T')[0]);
   const [selectedProfileName, setSelectedProfileName] = useState<RiskProfile['name'] | 'Savings'>('Growth');
-  const [riskPerspectiveProfile, setRiskPerspectiveProfile] = useState<string | null>(null);
-  const [hiddenProfiles, setHiddenProfiles] = useState<string[]>([]);
+  const [hiddenProfiles] = useState<string[]>([]);
 
   const displayData = useMemo(() => {
     if (!selectedGoal) return {};
@@ -330,21 +328,7 @@ export function GoalSetup() {
                       </div>
                     </div>
 
-                    {/* Risk Toggle */}
-                    {profile.name !== 'Savings' && (
-                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
-                        <Label htmlFor={`risk-${profile.name}`} className="text-xs text-gray-400">
-                          Show Risk Range
-                        </Label>
-                        <Switch
-                          id={`risk-${profile.name}`}
-                          checked={riskPerspectiveProfile === profile.name}
-                          onCheckedChange={(checked) => {
-                            setRiskPerspectiveProfile(checked ? profile.name : null);
-                          }}
-                        />
-                      </div>
-                    )}
+
                   </div>
                 ))}
               </div>
@@ -409,6 +393,45 @@ export function GoalSetup() {
                     ))}
                   </LineChart>
                 </ResponsiveContainer>
+              </div>
+              
+              {/* Chart Legend */}
+              <div className="mt-4 space-y-3">
+                <div className="flex flex-wrap justify-center gap-4">
+                  {/* Investment Strategy Lines */}
+                  {ALL_PROFILES.map(profile => (
+                    <div key={profile.name} className="flex items-center gap-2">
+                      <div 
+                        className="w-4 h-0.5 rounded"
+                        style={{ 
+                          backgroundColor: PROFILE_COLORS[profile.name],
+                          opacity: selectedProfileName === profile.name ? 1 : 0.7
+                        }}
+                      />
+                      <span className={`text-xs ${
+                        selectedProfileName === profile.name 
+                          ? 'text-white font-medium' 
+                          : 'text-gray-400'
+                      }`}>
+                        {profile.name}
+                      </span>
+                    </div>
+                  ))}
+                  
+                  {/* Total Invested Line */}
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-0.5 bg-gray-500" style={{ backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 2px, #6b7280 2px, #6b7280 4px)' }} />
+                    <span className="text-xs text-gray-400">Total Invested</span>
+                  </div>
+                </div>
+                
+                {/* Line Explanations */}
+                <div className="grid grid-cols-1 gap-4 text-xs justify-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-1 h-4 bg-gray-500 opacity-10" />
+                    <span className="text-gray-400">Timeline Grid</span>
+                  </div>
+                </div>
               </div>
             </div>
 
