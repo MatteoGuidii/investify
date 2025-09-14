@@ -18,9 +18,7 @@ export function Header() {
                     <div className="w-3 h-3 rounded bg-white"></div>
                   </div>
                 </div>
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-neo-accent rounded-full flex items-center justify-center">
-                  <div className="w-2 h-2 bg-white rounded-full"></div>
-                </div>
+                {/* Removed decorative accent circle */}
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">Investify</h1>

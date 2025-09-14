@@ -30,14 +30,18 @@ export function AiCoach({ className = '' }: AiCoachProps) {
   const [showWelcome, setShowWelcome] = useState(false);
   // Consent state: null = not asked yet, true = granted, false = declined
   const [hasConsent, setHasConsent] = useState<boolean | null>(null);
+  // Consent state: null = not asked yet, true = granted, false = declined
+  const [hasConsent, setHasConsent] = useState<boolean | null>(null);
   const [showParticles, setShowParticles] = useState(false);
   const [position] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   // Removed blinking attention effect state
 
-  const fetchInsight = useCallback(async (forceRefresh = false) => {
+  // Central fetch function; optional bypass to avoid race condition right after granting consent
+  const fetchInsight = useCallback(async (forceRefresh = false, bypassConsent = false) => {
     if (isLoading) return;
-    if (hasConsent !== true) return; // Guard: only fetch after consent
+    // Guard unless explicitly bypassed (e.g., immediately after user grants consent before state closure updates)
+    if (!bypassConsent && hasConsent !== true) return; 
     
     setIsLoading(true);
     setIsThinking(true);
@@ -115,6 +119,8 @@ export function AiCoach({ className = '' }: AiCoachProps) {
     if (!hasInitialized) {
       if (hasConsent !== true) {
         setShowSuggestion(true);
+      if (hasConsent !== true) {
+        setShowSuggestion(true);
         setShowWelcome(true);
       }
       setHasInitialized(true);
@@ -124,9 +130,9 @@ export function AiCoach({ className = '' }: AiCoachProps) {
   const grantConsent = () => {
     setHasConsent(true);
     try { localStorage.setItem('aiCoachConsent', 'granted'); } catch {/* ignore */}
-    // Transition out of welcome and fetch first insight
+    // Transition out of welcome and fetch first insight (bypass consent guard to avoid stale closure)
     setShowWelcome(false);
-    fetchInsight();
+    fetchInsight(false, true);
   };
   const declineConsent = () => {
     setHasConsent(false);
@@ -511,6 +517,21 @@ export function AiCoach({ className = '' }: AiCoachProps) {
                         Got it! 👍
                       </button>
                     </div>
+                  </div>
+                ) : hasConsent === true ? (
+                  // Placeholder state after consent granted but before first suggestion loaded
+                  <div className="py-2 text-xs text-gray-600 flex items-center gap-2">
+                    <div className="flex space-x-1">
+                      {[0, 1, 2].map(i => (
+                        <motion.div
+                          key={i}
+                          className="w-2 h-2 bg-blue-400 rounded-full"
+                          animate={{ scale: [1, 1.4, 1], opacity: [0.6, 1, 0.6] }}
+                          transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+                        />
+                      ))}
+                    </div>
+                    Preparing your personalized insight...
                   </div>
                 ) : null}
               </div>

@@ -63,10 +63,10 @@ export function Rewards() {
 
   const getChallengeIcon = (iconName: string) => {
     switch (iconName) {
-      case 'target': return <Target className="w-5 h-5" />;
-      case 'trending-up': return <TrendingUp className="w-5 h-5" />;
-      case 'star': return <Star className="w-5 h-5" />;
-      default: return <Award className="w-5 h-5" />;
+      case 'target': return <Target className="w-6 h-6" />;
+      case 'trending-up': return <TrendingUp className="w-6 h-6" />;
+      case 'star': return <Star className="w-6 h-6" />;
+      default: return <Award className="w-6 h-6" />;
     }
   };
 
@@ -94,89 +94,96 @@ export function Rewards() {
 
       <div className="relative z-10 px-4 py-6 max-w-6xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-xl font-semibold text-white mb-2">Rewards & Recognition</h1>
-          <p className="text-sm text-gray-400">Earn rewards for your investment journey. Every $100 invested gets you 10 Avion Points.</p>
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-white mb-3">Rewards & Recognition</h1>
+          <p className="text-base text-gray-300 font-medium">Earn rewards for your investment journey. Every $100 invested gets you 10 Avion Points.</p>
         </div>
 
         {/* Top Cards */}
-        <div className="grid gap-6 lg:grid-cols-3 items-stretch">
+        <div className="grid gap-6 lg:grid-cols-3">
           {/* Avion Points */}
-          <div className="bg-yellow-500/20 backdrop-blur-md border border-yellow-400/40 rounded-xl p-6 flex flex-col h-full">
+          <div className="bg-yellow-500/20 backdrop-blur-md border border-yellow-400/40 rounded-xl p-6 flex flex-col min-h-[280px]">
             <div className="flex items-start gap-3 mb-4">
               <div className="p-2 rounded-lg bg-yellow-500/30 flex-shrink-0">
-                <Star className="w-5 h-5 text-yellow-300" />
+                <Star className="w-6 h-6 text-yellow-300" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base font-medium text-white">Avion Points</h3>
-                <p className="text-xs text-gray-300">Total earned</p>
+                <h3 className="text-lg font-semibold text-white">Avion Points</h3>
+                <p className="text-sm text-gray-200">Total earned</p>
               </div>
             </div>
-            <div className="text-2xl font-bold text-yellow-300 mb-3">
+            <div className="text-3xl font-bold text-yellow-300 mb-3">
               {rewardsData.avionPoints.total.toLocaleString()}
             </div>
-            <p className="text-xs text-gray-200 mb-4">
+            <p className="text-sm text-gray-100 mb-6 flex-grow">
               {rewardsData.avionPoints.description}
             </p>
             <div className="mt-auto">
-              <Button className="w-full bg-yellow-600/80 hover:bg-yellow-600 text-white font-medium text-sm py-2 border-0">
-                Redeem Points
-              </Button>
+              <a
+                href="https://www.avionrewards.com/en-ca/lp/rewards/join-for-free/?utm_dc=ga_SEG_20529236817_150583073982_743756569614_kwd-297749411433_c_g_&gad_source=1&gad_campaignid=20529236817&gbraid=0AAAAADPnvsrNQ7QxfQ1vwVOyjB3rFhEML&gclid=Cj0KCQjwrJTGBhCbARIsANFBfgvxMu91rHdmkzyfhPh1BV_sV5D_Gw0fx2SvznC1DABSbTZjgjIdFIwaAsi8EALw_wcB"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+              >
+                <Button className="w-full bg-yellow-600/80 hover:bg-yellow-600 text-white font-medium text-sm py-3 border-0">
+                  Redeem Points
+                </Button>
+              </a>
             </div>
           </div>
 
           {/* Investment Streak */}
-          <div className="bg-green-500/20 backdrop-blur-md border border-green-400/40 rounded-xl p-6 flex flex-col h-full">
+          <div className="bg-green-500/20 backdrop-blur-md border border-green-400/40 rounded-xl p-6 flex flex-col min-h-[280px]">
             <div className="flex items-start gap-3 mb-4">
               <div className="p-2 rounded-lg bg-green-500/30 flex-shrink-0">
-                <Zap className="w-5 h-5 text-green-300" />
+                <Zap className="w-6 h-6 text-green-300" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base font-medium text-white">Investment Streak</h3>
-                <p className="text-xs text-gray-300">{rewardsData.investmentStreak.months} months</p>
+                <h3 className="text-lg font-semibold text-white">Investment Streak</h3>
+                <p className="text-sm text-gray-200">{rewardsData.investmentStreak.months} months</p>
               </div>
             </div>
-            <div className="text-2xl font-bold text-green-300 mb-3">
+            <div className="text-3xl font-bold text-green-300 mb-3">
               {rewardsData.investmentStreak.currentProgress}/{rewardsData.investmentStreak.nextMilestone}
             </div>
-            <p className="text-xs text-gray-200 mb-4">
+            <p className="text-sm text-gray-100 mb-6 flex-grow">
               {monthsToMilestone} months to next milestone
             </p>
             <div className="mt-auto">
-              <Progress value={rewardsData.investmentStreak.completionPercent} className="mb-1" />
-              {/* <span className="text-[11px] text-gray-400">{rewardsData.investmentStreak.completionPercent}% complete</span> */}
+              <Progress value={rewardsData.investmentStreak.completionPercent} className="mb-2" />
+              {/* <span className="text-xs text-gray-300">{rewardsData.investmentStreak.completionPercent}% complete</span> */}
             </div>
           </div>
 
           {/* Leaderboard */}
-          <div className="bg-blue-500/20 backdrop-blur-md border border-blue-400/40 rounded-xl p-6 flex flex-col h-full">
+          <div className="bg-blue-500/20 backdrop-blur-md border border-blue-400/40 rounded-xl p-6 flex flex-col min-h-[280px]">
             <div className="flex items-start gap-3 mb-4">
               <div className="p-2 rounded-lg bg-blue-500/30 flex-shrink-0">
-                <Trophy className="w-5 h-5 text-blue-300" />
+                <Trophy className="w-6 h-6 text-blue-300" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base font-medium text-white">Your Rank</h3>
-                <p className="text-xs text-gray-300">Among peers</p>
+                <h3 className="text-lg font-semibold text-white">Your Rank</h3>
+                <p className="text-sm text-gray-200">Among peers</p>
               </div>
             </div>
-            <div className="text-2xl font-bold text-blue-300 mb-3">
+            <div className="text-3xl font-bold text-blue-300 mb-3">
               #{me?.rank ?? 'N/A'}
             </div>
-            <p className="text-xs text-gray-200 mb-4">
+            <p className="text-sm text-gray-100 mb-6 flex-grow">
               {me?.badge ?? 'Rising Star'}
             </p>
             <div className="mt-auto">
-              <Badge variant="secondary" className="text-xs">
-                {/* {me?.badge ?? 'Rising Star'} */}
-              </Badge>
+              {/* <div className="bg-blue-500/10 border border-blue-400/20 rounded-lg px-3 py-2 text-center">
+                <span className="text-xs text-blue-300 font-medium">Current Badge</span>
+              </div> */}
             </div>
           </div>
         </div>
 
         {/* Active Challenges */}
         <div className="mt-8">
-          <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-            <Target className="w-5 h-5 text-green-400" />
+          <h2 className="text-xl font-medium text-white mb-4 flex items-center gap-2">
+            <Target className="w-6 h-6 text-green-400" />
             Active Challenges
           </h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -188,15 +195,15 @@ export function Rewards() {
                       {getChallengeIcon(challenge.icon)}
                     </div>
                     <div>
-                      <h4 className="text-sm font-medium text-white">{challenge.title}</h4>
-                      <p className="text-xs text-gray-400 mt-1">{challenge.description}</p>
+                      <h4 className="text-base font-medium text-white">{challenge.title}</h4>
+                      <p className="text-sm text-gray-300 mt-1">{challenge.description}</p>
                     </div>
                   </div>
                 </div>
                 <Progress value={challenge.completionPercent} className="mb-2" />
                 <div className="flex justify-between items-center mt-auto">
-                  <span className="text-xs text-gray-400">{challenge.completionPercent}% complete</span>
-                  <Badge variant="outline" className="text-xs">
+                  {/* <span className="text-sm text-gray-300">{challenge.completionPercent}% complete</span> */}
+                  <Badge variant="outline" className="text-sm">
                     {challenge.reward}
                   </Badge>
                 </div>
@@ -207,8 +214,8 @@ export function Rewards() {
 
         {/* Leaderboard */}
         <div className="mt-8">
-          <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-            <Users className="w-5 h-5 text-green-400" />
+          <h2 className="text-xl font-medium text-white mb-4 flex items-center gap-2">
+            <Users className="w-6 h-6 text-green-400" />
             Community Leaderboard
           </h2>
           <div className="neo-card p-4">
@@ -224,7 +231,7 @@ export function Rewards() {
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-base font-bold ${
                         entry.rank === 1
                           ? 'bg-yellow-500/20 text-yellow-400'
                           : entry.rank === 2
@@ -237,13 +244,13 @@ export function Rewards() {
                       {entry.rank}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-white">{entry.name}</p>
-                      <Badge variant="outline" className="text-xs mt-1">
+                      <p className="text-base font-medium text-white">{entry.name}</p>
+                      <Badge variant="outline" className="text-sm mt-1">
                         {entry.badge}
                       </Badge>
                     </div>
                   </div>
-                  <div className="text-sm font-medium text-green-400">
+                  <div className="text-base font-medium text-green-400">
                     {entry.points.toLocaleString()} pts
                   </div>
                 </div>
