@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useAppStore } from '@/lib/store';
 import { GoalCatalogue } from '@/components/goal-catalogue';
-import { GoalSetup } from '@/components/goal-setup';
+import { GoalSetup } from '@/components/goal-setup-clean';
 import { Dashboard } from '@/components/dashboard';
 import { Rewards } from '@/components/rewards';
 import { Header } from '@/components/header';
@@ -39,9 +39,9 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-neo-dark">
       <Header />
-      <main>
+      <main className="pt-20">
         {renderCurrentView()}
       </main>
     </div>

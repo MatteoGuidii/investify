@@ -30,7 +30,7 @@ const PROFILE_COLORS: { [key: string]: string } = {
 };
 
 export function GoalSetup() {
-  const { selectedGoal, setCurrentView, createGoalBasedInvestment, isLoading } = useAppStore();
+  const { selectedGoal, setCurrentView, createGoalBasedInvestment, isLoading, error, setError } = useAppStore();
   
   const [calculationMode, setCalculationMode] = useState<'fixedDate' | 'fixedAmount'>('fixedDate');
   const [monthlyAmount, setMonthlyAmount] = useState(250);
@@ -41,6 +41,7 @@ export function GoalSetup() {
   const [targetDate, setTargetDate] = useState(defaultTargetDate.toISOString().split('T')[0]);
   const [selectedProfileName, setSelectedProfileName] = useState<RiskProfile['name'] | 'Savings'>('Growth');
   const [riskPerspectiveProfile, setRiskPerspectiveProfile] = useState<string | null>(null);
+  const [hiddenProfiles, setHiddenProfiles] = useState<string[]>([]);
 
   const displayData = useMemo(() => {
     if (!selectedGoal) return {};
@@ -123,7 +124,9 @@ export function GoalSetup() {
 
       monthData['totalInvested'] = actualMonth * pmtForSelectedProfile;
       
-      const profilesToCalculate = ALL_PROFILES;
+      const profilesToCalculate = ALL_PROFILES.filter(profile => 
+        !hiddenProfiles.includes(profile.name) || profile.name === selectedProfileName
+      );
 
       profilesToCalculate.forEach(profile => {
         const pmt = displayData[profile.name]?.pmt || 0;
@@ -136,7 +139,9 @@ export function GoalSetup() {
       const monthData: { month: number; [key: string]: number } = { month: timelineInMonths };
       monthData['totalInvested'] = timelineInMonths * pmtForSelectedProfile;
       
-      const profilesToCalculate = ALL_PROFILES;
+      const profilesToCalculate = ALL_PROFILES.filter(profile => 
+        !hiddenProfiles.includes(profile.name) || profile.name === selectedProfileName
+      );
 
       profilesToCalculate.forEach(profile => {
         const pmt = displayData[profile.name]?.pmt || 0;
@@ -146,7 +151,7 @@ export function GoalSetup() {
     }
     
     return data;
-  }, [timelineInMonths, displayData, selectedProfileName]);
+  }, [timelineInMonths, displayData, selectedProfileName, hiddenProfiles]);
 
   if (!selectedGoal) {
     if (typeof window !== 'undefined') {
@@ -168,12 +173,17 @@ export function GoalSetup() {
     const selectedProfile = ALL_PROFILES.find(p => p.name === selectedProfileName);
     if (!selectedProfile || !displayData[selectedProfileName]) return;
 
-    const targetDateObj = new Date(targetDate);
-    await createGoalBasedInvestment(
+    const success = await createGoalBasedInvestment(
       selectedGoal.id,
       displayData[selectedProfileName].pmt,
-      targetDateObj
+      new Date(targetDate)
     );
+
+    if (success) {
+      // Navigate to dashboard on successful goal creation
+      setCurrentView('dashboard');
+    }
+    // If not successful, error will be shown in the UI via the store's error state
   };
 
   return (
@@ -198,6 +208,27 @@ export function GoalSetup() {
             <p className="text-sm text-gray-400">{selectedGoal.title}</p>
           </div>
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="mb-6">
+            <div className="neo-glass border-red-400/30 p-4 rounded-xl">
+              <div className="flex items-center">
+                <div className="text-red-400 text-xl mr-3">⚠️</div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-red-300">Error</h3>
+                  <p className="text-sm text-red-200 mt-1">{error}</p>
+                </div>
+                <button
+                  onClick={() => setError(null)}
+                  className="text-red-400 hover:text-red-300 text-xl ml-3"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Goal Header */}
         <div className="neo-card-elevated p-5 mb-6">

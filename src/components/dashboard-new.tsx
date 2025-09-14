@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useAppStore } from '../lib/store';
 import { apiService } from '../lib/api';
 import { Button } from './ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Progress } from './ui/progress';
 import { PlusCircle, RefreshCw, Wallet } from 'lucide-react';
 import { Portfolio } from '../lib/types';
 import { AiCoach } from './ai-coach';
@@ -187,50 +189,50 @@ export function Dashboard() {
         )}
 
         {/* Welcome Section */}
-        <div className="max-w-6xl mx-auto mb-6">
-          <div className="neo-card p-6">
-            <div className="flex justify-between items-start mb-6">
+        <div className="max-w-6xl mx-auto mb-8">
+          <div className="neo-card-elevated p-8">
+            <div className="flex justify-between items-start mb-8">
               <div>
-                <h1 className="text-2xl font-semibold mb-2 text-white">
+                <h1 className="text-4xl font-bold mb-3 text-transparent bg-clip-text bg-gradient-to-r from-white to-green-200">
                   Welcome back, {currentClient.name}!
                 </h1>
-                <p className="text-gray-400 text-sm">You&apos;re making great progress! Keep up the consistency.</p>
+                <p className="text-gray-300 text-lg">You're making great progress! Keep up the consistency.</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 <Button 
                   variant="outline" 
                   onClick={() => { setError(null); loadData(); }} 
                   disabled={isRefreshing} 
-                  className="neo-button-secondary text-xs px-3 py-1.5"
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/30"
                 >
-                  <RefreshCw className={`w-3 h-3 mr-1.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
                   {isRefreshing ? 'Loading...' : 'Refresh'}
                 </Button>
               </div>
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="neo-glass p-4 rounded-xl">
-                <div className="flex items-center space-x-2 mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-green-400/20 flex items-center justify-center">
-                    <Wallet className="w-4 h-4 text-green-400" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="neo-glass-strong p-6 rounded-2xl">
+                <div className="flex items-center space-x-3 mb-2">
+                  <div className="w-10 h-10 rounded-xl bg-green-400/20 flex items-center justify-center">
+                    <Wallet className="w-5 h-5 text-green-400" />
                   </div>
-                  <h3 className="text-white/90 font-medium text-sm">Total Saved</h3>
+                  <h3 className="text-white/90 font-medium">Total Saved</h3>
                 </div>
-                <span className="text-2xl font-semibold text-white">
+                <span className="text-3xl font-bold text-white">
                   ${Math.round(portfolios.reduce((sum, p) => sum + p.current_value, 0)).toLocaleString()}
                 </span>
               </div>
 
-              <div className="neo-glass p-4 rounded-xl">
-                <div className="flex items-center space-x-2 mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-green-400/20 flex items-center justify-center">
-                    <RefreshCw className="w-4 h-4 text-green-400" />
+              <div className="neo-glass-strong p-6 rounded-2xl">
+                <div className="flex items-center space-x-3 mb-2">
+                  <div className="w-10 h-10 rounded-xl bg-green-400/20 flex items-center justify-center">
+                    <RefreshCw className="w-5 h-5 text-green-400" />
                   </div>
-                  <h3 className="text-white/90 font-medium text-sm">Monthly Contribution</h3>
+                  <h3 className="text-white/90 font-medium">Monthly Contribution</h3>
                 </div>
-                <span className="text-2xl font-semibold text-white">
+                <span className="text-3xl font-bold text-white">
                   ${Math.round(userGoals.reduce((sum, g) => sum + g.monthlyContribution, 0)).toLocaleString()}
                 </span>
               </div>
@@ -240,13 +242,13 @@ export function Dashboard() {
 
         {/* Your Goals Section */}
         <div className="max-w-6xl mx-auto">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-white">Your Goals</h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-3xl font-bold text-white">Your Goals</h2>
             {userGoals.length > 2 ? (
               <Button 
                 variant="ghost"
                 onClick={() => setShowAllGoals(!showAllGoals)}
-                className="text-white hover:text-green-400 transition-colors text-xs"
+                className="text-white hover:text-green-400 transition-colors"
               >
                 {showAllGoals ? 'Show less' : `View all (${userGoals.length})`}
               </Button>
@@ -254,7 +256,7 @@ export function Dashboard() {
               <Button 
                 onClick={() => setCurrentView('catalogue')} 
                 disabled={isRefreshing} 
-                className="neo-button text-xs px-3 py-1.5"
+                className="neo-button"
               >
                 Add Goal +
               </Button>
@@ -263,38 +265,38 @@ export function Dashboard() {
 
           {/* Goal Cards */}
           {userGoals.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               {(showAllGoals ? userGoals : userGoals.slice(0, 2)).map((userGoal, index) => {
                 const portfolio = portfolios.find(p => p.id === userGoal.portfolioId);
                 const progress = portfolio ? (portfolio.current_value / userGoal.targetAmount) * 100 : 0;
                 const progressClamped = Math.min(progress, 100);
                 
                 return (
-                  <div key={`${userGoal.id}-${index}`} className="neo-card p-4 hover:scale-[1.02] transition-transform">
+                  <div key={`${userGoal.id}-${index}`} className="neo-card p-6 hover:scale-[1.02] transition-transform">
                     {/* Goal Image */}
-                    <div className="h-20 bg-gradient-to-br from-green-400/20 to-green-600/20 rounded-xl relative mb-4 neo-glass">
-                      <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm rounded-xl">
-                        <span className="text-3xl">{getCategoryIcon(userGoal.goal.category)}</span>
+                    <div className="h-32 bg-gradient-to-br from-green-400/20 to-green-600/20 rounded-2xl relative mb-6 neo-glass-strong">
+                      <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm rounded-2xl">
+                        <span className="text-5xl">{getCategoryIcon(userGoal.goal.category)}</span>
                       </div>
                     </div>
                     
                     <div>
-                      <h3 className="font-semibold text-base mb-1 text-white">{userGoal.goal.title}</h3>
-                      <p className="text-sm text-green-400 font-medium mb-3">{formatCurrency(userGoal.targetAmount)}</p>
+                      <h3 className="font-semibold text-xl mb-2 text-white">{userGoal.goal.title}</h3>
+                      <p className="text-lg text-green-400 font-medium mb-4">{formatCurrency(userGoal.targetAmount)}</p>
                       
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <div className="relative">
-                          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                          <div className="h-3 bg-white/10 rounded-full overflow-hidden">
                             <div 
                               className="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full transition-all duration-500"
                               style={{ width: `${progressClamped}%` }}
                             ></div>
                           </div>
                         </div>
-                        <div className="flex justify-between text-xs">
+                        <div className="flex justify-between text-sm">
                           <span className="text-green-400 font-medium">{Math.round(progressClamped)}% complete</span>
-                          <span className="text-gray-400">
-                            {portfolio ? formatCurrency(portfolio.current_value) : formatCurrency(userGoal.currentAmount)}
+                          <span className="text-gray-300">
+                            Saved: {portfolio ? formatCurrency(portfolio.current_value) : formatCurrency(userGoal.currentAmount)}
                           </span>
                         </div>
                       </div>
@@ -307,11 +309,11 @@ export function Dashboard() {
 
           {/* No Goals State */}
           {userGoals.length === 0 && (
-            <div className="text-center py-12">
-              <div className="neo-card p-8 max-w-md mx-auto">
-                <div className="text-4xl mb-4">🎯</div>
-                <h3 className="text-lg font-semibold mb-2 text-white">No Goals Yet</h3>
-                <p className="text-gray-400 text-sm mb-6">Start your savings journey by creating your first goal.</p>
+            <div className="text-center py-16">
+              <div className="neo-card p-12 max-w-md mx-auto">
+                <div className="text-6xl mb-6">🎯</div>
+                <h3 className="text-2xl font-semibold mb-3 text-white">No Goals Yet</h3>
+                <p className="text-gray-400 mb-8">Start your savings journey by creating your first goal.</p>
                 <Button onClick={() => setCurrentView('catalogue')} className="neo-button">
                   <PlusCircle className="w-4 h-4 mr-2" />
                   Create Your First Goal
@@ -322,51 +324,51 @@ export function Dashboard() {
 
           {/* Account Summary */}
           {portfolios.length > 0 && (
-            <div className="mt-8">
-              <h3 className="text-lg font-semibold mb-4 text-white">Account Overview</h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="neo-glass p-4 rounded-xl">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <div className="w-8 h-8 rounded-lg bg-yellow-400/20 flex items-center justify-center">
-                      <Wallet className="w-4 h-4 text-yellow-400" />
+            <div className="mt-12">
+              <h3 className="text-2xl font-semibold mb-6 text-white">Account Overview</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="neo-glass-strong p-6 rounded-2xl">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-yellow-400/20 flex items-center justify-center">
+                      <Wallet className="w-5 h-5 text-yellow-400" />
                     </div>
-                    <h4 className="text-white/90 font-medium text-sm">Available Cash</h4>
+                    <h4 className="text-white/90 font-medium">Available Cash</h4>
                   </div>
-                  <span className="text-lg font-semibold text-white">{formatCurrency(currentClient?.cash || 0)}</span>
+                  <span className="text-2xl font-bold text-white">{formatCurrency(currentClient?.cash || 0)}</span>
                 </div>
 
-                <div className="neo-glass p-4 rounded-xl">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <div className="w-8 h-8 rounded-lg bg-green-400/20 flex items-center justify-center">
+                <div className="neo-glass-strong p-6 rounded-2xl">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-green-400/20 flex items-center justify-center">
                       <span className="text-green-400">💰</span>
                     </div>
-                    <h4 className="text-white/90 font-medium text-sm">Total Invested</h4>
+                    <h4 className="text-white/90 font-medium">Total Invested</h4>
                   </div>
-                  <span className="text-lg font-semibold text-white">
+                  <span className="text-2xl font-bold text-white">
                     {formatCurrency(portfolios.reduce((sum, p) => sum + p.invested_amount, 0))}
                   </span>
                 </div>
 
-                <div className="neo-glass p-4 rounded-xl">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <div className="w-8 h-8 rounded-lg bg-blue-400/20 flex items-center justify-center">
+                <div className="neo-glass-strong p-6 rounded-2xl">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-blue-400/20 flex items-center justify-center">
                       <span className="text-blue-400">📈</span>
                     </div>
-                    <h4 className="text-white/90 font-medium text-sm">Current Value</h4>
+                    <h4 className="text-white/90 font-medium">Current Value</h4>
                   </div>
-                  <span className="text-lg font-semibold text-white">
+                  <span className="text-2xl font-bold text-white">
                     {formatCurrency(portfolios.reduce((sum, p) => sum + p.current_value, 0))}
                   </span>
                 </div>
 
-                <div className="neo-glass p-4 rounded-xl">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <div className="w-8 h-8 rounded-lg bg-purple-400/20 flex items-center justify-center">
+                <div className="neo-glass-strong p-6 rounded-2xl">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-purple-400/20 flex items-center justify-center">
                       <span className="text-purple-400">🎯</span>
                     </div>
-                    <h4 className="text-white/90 font-medium text-sm">Active Goals</h4>
+                    <h4 className="text-white/90 font-medium">Active Goals</h4>
                   </div>
-                  <span className="text-lg font-semibold text-white">{userGoals.length}</span>
+                  <span className="text-2xl font-bold text-white">{userGoals.length}</span>
                 </div>
               </div>
             </div>

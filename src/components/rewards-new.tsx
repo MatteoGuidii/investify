@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAppStore } from '../lib/store';
 import { Button } from './ui/button';
 import { Progress } from './ui/progress';
 import { Badge } from './ui/badge';
@@ -8,6 +9,7 @@ import { Star, TrendingUp, Trophy, Users, Gift, Award, Target, Zap } from 'lucid
 import type { RewardsData } from '../lib/types';
 
 export function Rewards() {
+  const { currentClient } = useAppStore();
   const [rewardsData, setRewardsData] = useState<RewardsData | null>(null);
 
   useEffect(() => {
@@ -152,7 +154,7 @@ export function Rewards() {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-xl font-semibold text-white mb-2">Rewards & Recognition</h1>
-          <p className="text-sm text-gray-400">Earn rewards for your investment journey</p>
+          <p className="text-sm text-gray-400">Earn rewards for your investment journey. Every $100 invested gets you 10 Avion Points.</p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">

@@ -217,6 +217,7 @@ export interface LeaderboardEntry {
   rank: number;
   name: string;
   points: number;
+  badge: string;
   isCurrentUser: boolean;
 }
 

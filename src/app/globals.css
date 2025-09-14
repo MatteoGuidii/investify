@@ -1,58 +1,58 @@
 @import "tailwindcss";
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 220 13% 13%;
-  --card: 0 0% 100%;
-  --card-foreground: 220 13% 13%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 220 13% 13%;
-  --primary: 217 100% 32%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 51 100% 59%;
-  --secondary-foreground: 217 100% 32%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 217 100% 32%;
-  --accent-foreground: 0 0% 100%;
+  --background: 220 20% 8%;
+  --foreground: 210 10% 95%;
+  --card: 220 18% 12%;
+  --card-foreground: 210 10% 95%;
+  --popover: 220 18% 12%;
+  --popover-foreground: 210 10% 95%;
+  --primary: 120 90% 45%;
+  --primary-foreground: 220 20% 8%;
+  --secondary: 120 60% 30%;
+  --secondary-foreground: 210 10% 95%;
+  --muted: 220 16% 16%;
+  --muted-foreground: 210 10% 60%;
+  --accent: 84 100% 60%;
+  --accent-foreground: 220 20% 8%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 100%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 217 100% 32%;
-  --radius: 0.5rem;
-  --chart-1: 217 100% 32%;
-  --chart-2: 51 100% 59%;
-  --chart-3: 173 58% 39%;
-  --chart-4: 43 74% 66%;
-  --chart-5: 27 87% 67%;
+  --border: 220 16% 20%;
+  --input: 220 16% 16%;
+  --ring: 120 90% 45%;
+  --radius: 1rem;
+  --chart-1: 120 90% 45%;
+  --chart-2: 84 100% 60%;
+  --chart-3: 160 80% 50%;
+  --chart-4: 200 80% 60%;
+  --chart-5: 280 80% 70%;
 }
 
 .dark {
-  --background: 220 13% 13%;
-  --foreground: 0 0% 100%;
-  --card: 220 13% 13%;
-  --card-foreground: 0 0% 100%;
-  --popover: 220 13% 13%;
-  --popover-foreground: 0 0% 100%;
-  --primary: 217 100% 32%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 51 100% 59%;
-  --secondary-foreground: 217 100% 32%;
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 217 100% 32%;
-  --accent-foreground: 0 0% 100%;
+  --background: 220 20% 8%;
+  --foreground: 210 10% 95%;
+  --card: 220 18% 12%;
+  --card-foreground: 210 10% 95%;
+  --popover: 220 18% 12%;
+  --popover-foreground: 210 10% 95%;
+  --primary: 120 90% 45%;
+  --primary-foreground: 220 20% 8%;
+  --secondary: 120 60% 30%;
+  --secondary-foreground: 210 10% 95%;
+  --muted: 220 16% 16%;
+  --muted-foreground: 210 10% 60%;
+  --accent: 84 100% 60%;
+  --accent-foreground: 220 20% 8%;
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 0 0% 100%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 217 100% 32%;
-  --chart-1: 217 100% 32%;
-  --chart-2: 51 100% 59%;
-  --chart-3: 173 58% 39%;
-  --chart-4: 43 74% 66%;
-  --chart-5: 27 87% 67%;
+  --border: 220 16% 20%;
+  --input: 220 16% 16%;
+  --ring: 120 90% 45%;
+  --chart-1: 120 90% 45%;
+  --chart-2: 84 100% 60%;
+  --chart-3: 160 80% 50%;
+  --chart-4: 200 80% 60%;
+  --chart-5: 280 80% 70%;
 }
 
 * {
@@ -64,36 +64,163 @@ body {
   background: hsl(var(--background));
 }
 
-/* RBC Brand Colors */
-.rbc-blue {
-  color: #003DA5;
+/* Nexacard-inspired Brand Colors */
+.neo-primary {
+  color: #22c55e;
 }
 
-.bg-rbc-blue {
-  background-color: #003DA5;
+.bg-neo-primary {
+  background-color: #22c55e;
 }
 
-.rbc-yellow {
-  color: #FFD320;
+.neo-accent {
+  color: #84cc16;
 }
 
-.bg-rbc-yellow {
-  background-color: #FFD320;
+.bg-neo-accent {
+  background-color: #84cc16;
 }
 
-.border-rbc-blue {
-  border-color: #003DA5;
+.neo-dark {
+  color: #0f172a;
 }
 
-.border-rbc-yellow {
-  border-color: #FFD320;
+.bg-neo-dark {
+  background-color: #0f172a;
+}
+
+.neo-dark-light {
+  color: #1e293b;
+}
+
+.bg-neo-dark-light {
+  background-color: #1e293b;
+}
+
+.neo-glass {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.neo-glass-dark {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.neo-glass-strong {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.neo-gradient {
+  background: linear-gradient(135deg, #22c55e 0%, #84cc16 100%);
+}
+
+.neo-gradient-dark {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+.neo-gradient-radial {
+  background: radial-gradient(circle at 50% 50%, rgba(34, 197, 94, 0.2) 0%, transparent 70%);
+}
+
+/* Modern card effects - refined and professional */
+.neo-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.75rem;
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.neo-card-elevated {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.75rem;
+  box-shadow: 
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -4px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.neo-button {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.625rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.neo-button:hover {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.neo-button-ghost {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.neo-button-ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Animated background */
+.neo-bg-animated {
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(34, 197, 94, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(132, 204, 22, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(34, 197, 94, 0.1) 0%, transparent 50%);
 }
 
 body {
-  background-color: hsl(var(--background));
+  background: #0f172a;
   color: hsl(var(--foreground));
   font-feature-settings: "rlig" 1, "calt" 1;
+  font-size: 14px;
+  line-height: 1.4;
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(34, 197, 94, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(132, 204, 22, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(34, 197, 94, 0.02) 0%, transparent 50%);
 }
+
+/* Professional Typography Scale */
+h1 { font-size: 1.125rem; font-weight: 600; line-height: 1.5; }
+h2 { font-size: 1rem; font-weight: 600; line-height: 1.45; }
+h3 { font-size: 0.9rem; font-weight: 600; line-height: 1.4; }
+h4 { font-size: 0.875rem; font-weight: 500; line-height: 1.4; }
+
+.text-xs { font-size: 0.75rem; line-height: 1.2; }
+.text-sm { font-size: 0.825rem; line-height: 1.3; }
+.text-base { font-size: 0.875rem; line-height: 1.4; }
+.text-lg { font-size: 1rem; line-height: 1.45; }
+.text-xl { font-size: 1.125rem; line-height: 1.5; }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
@@ -117,5 +244,58 @@ body {
 * {
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
+  transition-duration: 200ms;
+}
+
+/* Improved scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(34, 197, 94, 0.3);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(34, 197, 94, 0.5);
+  background-clip: content-box;
+}
+
+/* Additional utilities for Nexacard style */
+.text-gradient {
+  background: linear-gradient(135deg, #22c55e 0%, #84cc16 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.backdrop-blur-strong {
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+}
+
+/* Modern focus styles */
+*:focus-visible {
+  outline: 2px solid #22c55e;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Selection styles */
+::selection {
+  background-color: rgba(34, 197, 94, 0.3);
+  color: white;
+}
+
+::-moz-selection {
+  background-color: rgba(34, 197, 94, 0.3);
+  color: white;
 }

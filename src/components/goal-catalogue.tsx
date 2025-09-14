@@ -4,7 +4,6 @@ import { useAppStore } from '@/lib/store';
 import { GOAL_CATALOGUE } from '@/lib/goals-data';
 import { Goal } from '@/lib/types';
 import { Button } from './ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 
 export function GoalCatalogue() {
   const { setSelectedGoal, setCurrentView, userGoals } = useAppStore();
@@ -36,75 +35,129 @@ export function GoalCatalogue() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      {/* Existing Goals Banner */}
-      {userGoals.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-medium rbc-blue">
-                You have {userGoals.length} active goal{userGoals.length !== 1 ? 's' : ''}
-              </h3>
-              <p className="text-sm text-gray-600">
-                View your progress or add another goal below
-              </p>
+    <div className="min-h-screen bg-neo-dark relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-neo-primary/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-neo-accent/10 rounded-full blur-3xl animate-pulse delay-700"></div>
+        <div className="absolute top-3/4 left-1/2 w-64 h-64 bg-green-400/5 rounded-full blur-2xl"></div>
+      </div>
+
+      <div className="relative z-10 px-6 py-8">
+        {/* Existing Goals Banner */}
+        {userGoals.length > 0 && (
+          <div className="max-w-6xl mx-auto mb-6">
+            <div className="neo-glass border-green-400/30 p-4 rounded-xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-xl bg-green-400/20 flex items-center justify-center">
+                    <span className="text-lg">🎯</span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white text-sm">
+                      You have {userGoals.length} active goal{userGoals.length !== 1 ? 's' : ''}
+                    </h3>
+                    <p className="text-xs text-gray-400">
+                      View your progress or add another goal below
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentView('dashboard')}
+                  className="neo-button-secondary text-xs px-3 py-1.5"
+                >
+                  View Dashboard
+                </Button>
+              </div>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => setCurrentView('dashboard')}
-              className="border-gray-300 text-gray-700 hover:border-rbc-blue hover:text-rbc-blue"
-            >
-              View Dashboard
+          </div>
+        )}
+
+        {/* Header */}
+        <div className="max-w-6xl mx-auto text-center mb-8">
+          <div className="neo-card p-6 mb-6">
+            <h1 className="text-3xl font-semibold mb-3 text-white">
+              {userGoals.length > 0 ? 'Add Another Goal' : 'Choose Your Financial Goal'}
+            </h1>
+            <p className="text-sm text-gray-400 max-w-2xl mx-auto">
+              Select what matters most to you and let our AI create a personalized investment strategy
+            </p>
+          </div>
+        </div>
+
+        {/* Goals Grid */}
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {GOAL_CATALOGUE.map((goal, index) => (
+              <div 
+                key={goal.id} 
+                className="neo-card p-5 hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
+                onClick={() => handleSelectGoal(goal)}
+              >
+                {/* Goal Icon with Gradient Background */}
+                <div className="relative mb-4">
+                  <div className="h-24 bg-gradient-to-br from-green-400/20 to-green-600/20 rounded-xl relative neo-glass">
+                    <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm rounded-xl">
+                      <span className="text-4xl">{getCategoryIcon(goal.category)}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Floating badge */}
+                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-400 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                    {index + 1}
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="space-y-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-1">{goal.title}</h3>
+                    <p className="text-gray-400 text-xs leading-relaxed">{goal.description}</p>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center p-2.5 neo-glass rounded-lg">
+                      <span className="text-xs text-gray-400">Target Amount</span>
+                      <span className="font-semibold text-green-400 text-sm">{formatCurrency(goal.finalPrice)}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-2.5 neo-glass rounded-lg">
+                      <span className="text-xs text-gray-400">From per month</span>
+                      <span className="text-white font-medium text-xs">{formatCurrency(goal.minMonthlyInvestment)}</span>
+                    </div>
+                  </div>
+
+                  {/* CTA Button */}
+                  <div className="pt-3">
+                    <Button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectGoal(goal);
+                      }}
+                      className="w-full neo-button text-xs font-medium group-hover:scale-105 transition-transform py-2"
+                    >
+                      Start Your Journey →
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom CTA Section */}
+        <div className="max-w-4xl mx-auto mt-12 text-center">
+          <div className="neo-card p-6">
+            <h2 className="text-lg font-semibold text-white mb-3">Need Help Deciding?</h2>
+            <p className="text-gray-400 text-sm mb-4">
+              Our AI coach can help you choose the perfect goal based on your financial situation and preferences.
+            </p>
+            <Button variant="outline" className="neo-button-secondary text-xs px-4 py-2">
+              Talk to AI Coach
             </Button>
           </div>
         </div>
-      )}
-
-      {/* Simple Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold rbc-blue mb-2">
-          {userGoals.length > 0 ? 'Add Another Goal' : 'Choose Your Goal'}
-        </h1>
-        <p className="text-gray-600">
-          Select what you want to save for
-        </p>
-      </div>
-
-      {/* Simple Goals Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {GOAL_CATALOGUE.map((goal) => (
-          <Card key={goal.id} className="hover:shadow-md transition-all border-gray-200 hover:border-rbc-blue/30">
-            <CardHeader>
-              <div className="text-4xl mb-2">
-                {getCategoryIcon(goal.category)}
-              </div>
-              <CardTitle className="text-lg">{goal.title}</CardTitle>
-              <CardDescription className="text-sm">{goal.description}</CardDescription>
-            </CardHeader>
-            
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-500">Target</span>
-                  <span className="font-semibold rbc-blue">{formatCurrency(goal.finalPrice)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-500">Monthly from</span>
-                  <span className="text-sm text-gray-700">{formatCurrency(goal.minMonthlyInvestment)}</span>
-                </div>
-              </div>
-            </CardContent>
-
-            <CardFooter>
-              <Button 
-                onClick={() => handleSelectGoal(goal)}
-                className="w-full bg-rbc-blue hover:bg-rbc-blue/90 text-white"
-              >
-                Start Saving
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
       </div>
     </div>
   );
