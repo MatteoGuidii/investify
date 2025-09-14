@@ -184,6 +184,8 @@ export interface MarketPerformance {
 export interface AvionPoints {
   total: number;
   description: string;
+  /** Lifetime points accumulated (doesn't decrease on redemption) */
+  lifetime?: number;
 }
 
 export interface InvestmentStreak {
@@ -219,6 +221,10 @@ export interface LeaderboardEntry {
   points: number;
   badge: string;
   isCurrentUser: boolean;
+  /** Computed level derived from lifetime points (e.g. every 1000 pts = 1 level) */
+  level?: number;
+  /** Lifetime points that determine level & rank; points may be redeemable subset */
+  lifetimePoints?: number;
 }
 
 export interface RewardsData {
