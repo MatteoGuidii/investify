@@ -263,7 +263,7 @@ export function Rewards() {
         <div className="mt-12" aria-labelledby="tier-progress-heading">
           <div className="flex items-center justify-between mb-3">
             <h3 id="tier-progress-heading" className="text-lg font-semibold text-white flex items-center gap-2">Your Tier Progress</h3>
-            <span className="text-xs text-gray-300">1 Level = {POINTS_PER_LEVEL.toLocaleString()} lifetime pts</span>
+            <span className="text-sm text-gray-300">1 Level = {POINTS_PER_LEVEL.toLocaleString()} lifetime pts</span>
           </div>
           {(() => {
             const lifetime = myLifetime;
@@ -317,7 +317,7 @@ export function Rewards() {
                   </div>
                 </div>
                 {/* Markers */}
-                <div className="relative mt-3 h-8">
+                <div className="relative mt-4 h-12">
                   {TIERS.map(t => {
                     const active = level >= t.minLevel;
                     const span = t.maxLevel - t.minLevel;
@@ -329,16 +329,16 @@ export function Rewards() {
                       <div key={t.name} className="group absolute flex flex-col items-center" style={{ left: `${centerPercent}%`, transform: 'translateX(-50%)' }}>
                         <button
                           type="button"
-                          className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500/40 ${active ? 'border-white/40 text-white bg-white/10' : 'border-white/15 text-gray-400 bg-transparent'}`}
+                          className={`px-3 py-1 rounded-full text-sm font-semibold border transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500/40 ${active ? 'border-white/40 text-white bg-white/10' : 'border-white/15 text-gray-400 bg-transparent'}`}
                           aria-label={`${t.name} tier ${active ? 'achieved' : 'locked'}`}
                         >
                           {t.name}
                         </button>
-                        <div className={`text-[10px] mt-1 ${active ? 'text-neutral-300' : 'text-neutral-500'}`}>L{t.minLevel}-{t.maxLevel - 1}</div>
-                        <div className="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute top-full mt-2 w-44 text-[11px] leading-snug text-neutral-200 bg-neutral-900/95 border border-white/10 rounded-md p-3 shadow-lg">
-                          <div className="font-semibold mb-1 tracking-wide" style={{ color: c.text }}>{t.name} Tier</div>
-                          <div>Levels {t.minLevel}–{t.maxLevel - 1}</div>
-                          <div>{level < t.minLevel ? `Unlock in ${t.minLevel - level} lvl` : level >= t.maxLevel ? 'Completed span' : 'In progress'}</div>
+                        <div className={`text-xs mt-1 ${active ? 'text-neutral-300' : 'text-neutral-500'}`}>L{t.minLevel}-{t.maxLevel - 1}</div>
+                        <div className="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute top-full mt-2 w-48 text-sm leading-relaxed text-neutral-200 bg-neutral-900/95 border border-white/10 rounded-md p-4 shadow-lg">
+                          <div className="font-semibold mb-2 text-base tracking-wide" style={{ color: c.text }}>{t.name} Tier</div>
+                          <div className="mb-1">Levels {t.minLevel}–{t.maxLevel - 1}</div>
+                          <div className="mb-2">{level < t.minLevel ? `Unlock in ${t.minLevel - level} lvl` : level >= t.maxLevel ? 'Completed span' : 'In progress'}</div>
                           {t.name !== 'Diamond' && (
                             <div>
                               Next tier at L{t.maxLevel}
@@ -349,22 +349,22 @@ export function Rewards() {
                     );
                   })}
                 </div>
-                <div className="mt-4 grid grid-cols-3 gap-4 text-xs">
-                  <div className="bg-white/5 rounded-md p-3 flex flex-col gap-1">
-                    <span className="text-gray-400">Current Tier</span>
-                    <span className="text-white font-medium">{tierName}</span>
+                <div className="mt-6 grid grid-cols-3 gap-4 text-sm">
+                  <div className="bg-white/5 rounded-md p-4 flex flex-col gap-2">
+                    <span className="text-gray-400 text-sm">Current Tier</span>
+                    <span className="text-white font-semibold text-lg">{tierName}</span>
                   </div>
-                  <div className="bg-white/5 rounded-md p-3 flex flex-col gap-1">
-                    <span className="text-gray-400">Level</span>
-                    <span className="text-white font-medium">{level}</span>
-                    <div className="h-1.5 w-full bg-black/40 rounded-full overflow-hidden">
+                  <div className="bg-white/5 rounded-lg p-4 flex flex-col gap-2">
+                    <span className="text-gray-400 text-sm">Level</span>
+                    <span className="text-white font-semibold text-lg">{level}</span>
+                    <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden">
                       <div className="h-full bg-green-400" style={{ width: `${inLevelProgress * 100}%` }} />
                     </div>
                   </div>
-                  <div className="bg-white/5 rounded-md p-3 flex flex-col gap-1">
-                    <span className="text-gray-400">Next Level</span>
-                    <span className="text-white font-medium">{remainingToNextLevel} pts</span>
-                    <span className="text-gray-500">to L{level + 1}</span>
+                  <div className="bg-white/5 rounded-lg p-4 flex flex-col gap-2">
+                    <span className="text-gray-400 text-sm">Next Level</span>
+                    <span className="text-white font-semibold text-lg">{remainingToNextLevel} pts</span>
+                    <span className="text-gray-400 text-sm">to L{level + 1}</span>
                   </div>
                 </div>
               </div>
