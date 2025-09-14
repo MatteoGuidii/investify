@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { Sparkles, X, Share2, Eye, TrendingUp, TrendingDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Kpi } from './Kpi';
 import { TrendMiniChart } from './TrendMiniChart';
 import { EpicWrapCardProps } from '@/lib/wrap/types';

@@ -5,16 +5,13 @@ import {
   X,
   Share2,
   Download,
-  Calendar,
   Target,
-  TrendingUp,
-  Users,
   Award,
   BarChart3,
   Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+// Removed unused Badge import
 import {
   Sheet,
   SheetContent,
@@ -63,8 +60,7 @@ export function EpicWrapSlideOver({
   const padding = (maxValue - minValue) * 0.1;
   const yDomain = [Math.max(0, minValue - padding), maxValue + padding];
 
-  const isPositiveTrend =
-    timeline[timeline.length - 1].portfolioValue > timeline[0].portfolioValue;
+  const isPositiveTrend = timeline[timeline.length - 1].portfolioValue > timeline[0].portfolioValue;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -83,7 +79,17 @@ export function EpicWrapSlideOver({
     }).format(value / 100);
   };
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  interface RechartsPayloadItem {
+    payload: {
+      formattedDate: string;
+      formattedValue: string;
+    };
+  }
+  interface CustomTooltipProps {
+    active?: boolean;
+    payload?: RechartsPayloadItem[];
+  }
+  const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (

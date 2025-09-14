@@ -24,9 +24,8 @@ export function EpicWrapFullScreen({
   isOpen,
   onClose,
   onShare,
-  onDownload,
 }: EpicWrapSlideOverProps) {
-  const { periodLabel, userFirstName, kpis, timeline } = wrap;
+  const { periodLabel: _periodLabel, userFirstName: _userFirstName, kpis, timeline } = wrap;
 
   // Filter out fee-related and diversification highlights
   const filteredHighlights = wrap.highlights.filter(
@@ -51,8 +50,7 @@ export function EpicWrapFullScreen({
   const padding = (maxValue - minValue) * 0.1;
   const yDomain = [Math.max(0, minValue - padding), maxValue + padding];
 
-  const isPositiveTrend =
-    timeline[timeline.length - 1].portfolioValue > timeline[0].portfolioValue;
+  // Trend direction not currently displayed in UI; remove if unused.
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("en-US", {
@@ -69,7 +67,17 @@ export function EpicWrapFullScreen({
       maximumFractionDigits: 1,
     }).format(value / 100);
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  interface RechartsPayloadItem {
+    payload: {
+      formattedDate: string;
+      formattedValue: string;
+    };
+  }
+  interface CustomTooltipProps {
+    active?: boolean;
+    payload?: RechartsPayloadItem[];
+  }
+  const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (

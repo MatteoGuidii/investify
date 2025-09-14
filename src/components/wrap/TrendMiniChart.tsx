@@ -34,7 +34,17 @@ export function TrendMiniChart({ points, className = '' }: TrendMiniChartProps) 
   // Determine if trend is positive
   const isPositiveTrend = points[points.length - 1].portfolioValue > points[0].portfolioValue;
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  interface RechartsPayloadItem {
+    payload: {
+      formattedDate: string;
+      portfolioValue: number;
+    };
+  }
+  interface CustomTooltipProps {
+    active?: boolean;
+    payload?: RechartsPayloadItem[];
+  }
+  const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
