@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '../lib/store';
 import { apiService } from '../lib/api';
@@ -23,7 +23,8 @@ export function Dashboard() {
     setCurrentClient,
     isLoading,
     setError,
-    error
+    error,
+    restoreDemo
   } = useAppStore();
   
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
@@ -153,6 +154,17 @@ export function Dashboard() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentClient?.id]); // Only re-run if client ID changes
+
+  // If Hamudy is selected but no goals loaded (e.g., after storage loss), auto-restore demo
+  const didAutoRestoreRef = useRef(false);
+  useEffect(() => {
+    const shouldRestore = currentClient?.name === 'Hamudy' && (userGoals?.length ?? 0) === 0;
+    if (shouldRestore && !didAutoRestoreRef.current) {
+      didAutoRestoreRef.current = true;
+      restoreDemo();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentClient?.name, userGoals?.length]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-CA', {

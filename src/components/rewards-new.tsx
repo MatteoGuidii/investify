@@ -30,7 +30,8 @@ export function Rewards() {
     };
 
     const wrapReadyData: RewardsData = {
-      avionPoints: { total: 10420, description: 'Redeemable for travel, merchandise, or statement credits' },
+      // Keep leaderboard consistent with Avion total by setting both to same number
+      avionPoints: { total: 15800, description: 'Redeemable for travel, merchandise, or statement credits' },
       investmentStreak: { months: 18, currentProgress: 18, nextMilestone: 24, completionPercent: 75 },
       discounts: [
         { id: 'd1', title: 'Partner Travel Deal', provider: 'Air Canada', discountText: 'Save 10% on select flights', expiryDate: '2025-12-31', category: 'travel' }
@@ -51,11 +52,13 @@ export function Rewards() {
     try {
       const isDemo = typeof window !== 'undefined' && localStorage.getItem('demo_mode') === 'true';
       const profile = typeof window !== 'undefined' && localStorage.getItem('demo_rewards_profile');
-      if (isDemo && profile === 'wrap_ready') {
-        setRewardsData(wrapReadyData);
-      } else {
-        setRewardsData(defaultData);
-      }
+      const raw = isDemo && profile === 'wrap_ready' ? wrapReadyData : defaultData;
+      // Normalize leaderboard so current user points == Avion total
+      const normalized: RewardsData = {
+        ...raw,
+        leaderboard: raw.leaderboard.map(entry => entry.isCurrentUser ? { ...entry, points: raw.avionPoints.total } : entry)
+      };
+      setRewardsData(normalized);
     } catch {
       setRewardsData(defaultData);
     }
