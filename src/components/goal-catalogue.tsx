@@ -104,7 +104,7 @@ export function GoalCatalogue() {
             {GOAL_CATALOGUE.map((goal, index) => (
               <div
                 key={goal.id}
-                className="neo-card p-5 hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
+                className="neo-card p-5 hover:scale-[1.02] transition-all duration-300 group cursor-pointer flex flex-col h-full"
                 onClick={() => handleSelectGoal(goal)}
               >
                 {/* Goal Image */}
@@ -139,8 +139,8 @@ export function GoalCatalogue() {
                   </div>
                 </div>
 
-                {/* Content */}
-                <div className="space-y-3">
+                {/* Content - flex-grow to push button to bottom */}
+                <div className="flex flex-col flex-grow space-y-3">
                   <div>
                     <h3 className="text-lg font-semibold text-white mb-1">
                       {goal.title}
@@ -170,14 +170,14 @@ export function GoalCatalogue() {
                     </div>
                   </div>
 
-                  {/* CTA Button */}
-                  <div className="pt-3">
+                  {/* CTA Button - pushed to bottom with mt-auto */}
+                  <div className="pt-3 mt-auto">
                     <Button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleSelectGoal(goal);
                       }}
-                      className="w-full neo-button text-xs font-medium group-hover:scale-105 transition-transform py-2"
+                      className="w-full neo-button text-xs font-medium group-hover:scale-105 transition-transform py-3 h-10"
                     >
                       Start Your Journey →
                     </Button>
@@ -185,25 +185,6 @@ export function GoalCatalogue() {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* Bottom CTA Section */}
-        <div className="max-w-4xl mx-auto mt-12 text-center">
-          <div className="neo-card p-6">
-            <h2 className="text-lg font-semibold text-white mb-3">
-              Need Help Deciding?
-            </h2>
-            <p className="text-gray-400 text-sm mb-4">
-              Our AI coach can help you choose the perfect goal based on your
-              financial situation and preferences.
-            </p>
-            <Button
-              variant="outline"
-              className="neo-button-secondary text-xs px-4 py-2"
-            >
-              Talk to AI Coach
-            </Button>
           </div>
         </div>
       </div>

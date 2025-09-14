@@ -61,20 +61,20 @@ export function Kpi({
       data-testid={testId}
     >
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+        <p className="text-sm font-medium text-white/80">
           {label}
         </p>
         {getTrendIcon()}
       </div>
       
       <div className="flex items-baseline space-x-1">
-        <span className="text-2xl font-bold text-gray-900 dark:text-white">
+        <span className="text-2xl font-bold text-white">
           {formattedValue}
         </span>
       </div>
       
       {hint && (
-        <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+        <p className="text-xs text-white/70 leading-relaxed">
           {hint}
         </p>
       )}

@@ -1,15 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAppStore } from '../lib/store';
 import { Button } from './ui/button';
 import { Progress } from './ui/progress';
 import { Badge } from './ui/badge';
-import { Star, TrendingUp, Trophy, Users, Gift, Award, Target, Zap } from 'lucide-react';
+import { Star, TrendingUp, Trophy, Users, Award, Target, Zap } from 'lucide-react';
 import type { RewardsData } from '../lib/types';
 
 export function Rewards() {
-  const { currentClient } = useAppStore();
   const [rewardsData, setRewardsData] = useState<RewardsData | null>(null);
 
   useEffect(() => {
@@ -25,32 +23,7 @@ export function Rewards() {
         nextMilestone: 15,
         completionPercent: 80
       },
-      discounts: [
-        {
-          id: '1',
-          title: 'RBC Travel Discount',
-          provider: 'RBC Travel',
-          discountText: '10% off your next trip booking',
-          expiryDate: '12/30/2025',
-          category: 'travel'
-        },
-        {
-          id: '2',
-          title: 'Tech Store Discount',
-          provider: 'Best Buy',
-          discountText: '5% off electronics',
-          expiryDate: '10/14/2025',
-          category: 'tech'
-        },
-        {
-          id: '3',
-          title: 'Lifestyle Rewards',
-          provider: 'RBC Rewards',
-          discountText: '15% off dining experiences',
-          expiryDate: '11/30/2025',
-          category: 'lifestyle'
-        }
-      ],
+      discounts: [],
       challenges: [
         {
           id: '1',
@@ -115,16 +88,6 @@ export function Rewards() {
     setRewardsData(mockRewardsData);
   }, []);
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'travel': return '✈️';
-      case 'tech': return '💻';
-      case 'lifestyle': return '🍽️';
-      case 'shopping': return '🛍️';
-      default: return '🎁';
-    }
-  };
-
   const getChallengeIcon = (iconName: string) => {
     switch (iconName) {
       case 'target': return <Target className="w-5 h-5" />;
@@ -142,6 +105,12 @@ export function Rewards() {
     );
   }
 
+  const me = rewardsData.leaderboard.find(e => e.isCurrentUser);
+  const monthsToMilestone = Math.max(
+    0,
+    rewardsData.investmentStreak.nextMilestone - rewardsData.investmentStreak.currentProgress
+  );
+
   return (
     <div className="min-h-screen bg-neo-dark relative overflow-hidden">
       {/* Background Effects */}
@@ -157,69 +126,77 @@ export function Rewards() {
           <p className="text-sm text-gray-400">Earn rewards for your investment journey. Every $100 invested gets you 10 Avion Points.</p>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Avion Points Card */}
-          <div className="neo-card-elevated p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-yellow-500/20">
-                <Star className="w-5 h-5 text-yellow-400" />
+        {/* Top Cards */}
+        <div className="grid gap-6 lg:grid-cols-3 items-stretch">
+          {/* Avion Points */}
+          <div className="bg-yellow-500/20 backdrop-blur-md border border-yellow-400/40 rounded-xl p-6 flex flex-col h-full">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="p-2 rounded-lg bg-yellow-500/30 flex-shrink-0">
+                <Star className="w-5 h-5 text-yellow-300" />
               </div>
-              <div>
+              <div className="flex-1">
                 <h3 className="text-base font-medium text-white">Avion Points</h3>
-                <p className="text-xs text-gray-400">Total earned</p>
+                <p className="text-xs text-gray-300">Total earned</p>
               </div>
             </div>
-            <div className="text-2xl font-bold text-yellow-400 mb-2">
+            <div className="text-2xl font-bold text-yellow-300 mb-3">
               {rewardsData.avionPoints.total.toLocaleString()}
             </div>
-            <p className="text-xs text-gray-400 leading-relaxed">
+            <p className="text-xs text-gray-200 mb-4">
               {rewardsData.avionPoints.description}
             </p>
-            <Button className="w-full mt-4 neo-button text-sm py-2">
-              Redeem Points
-            </Button>
+            <div className="mt-auto">
+              <Button className="w-full bg-yellow-600/80 hover:bg-yellow-600 text-white font-medium text-sm py-2 border-0">
+                Redeem Points
+              </Button>
+            </div>
           </div>
 
           {/* Investment Streak */}
-          <div className="neo-card-elevated p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-green-500/20">
-                <Zap className="w-5 h-5 text-green-400" />
+          <div className="bg-green-500/20 backdrop-blur-md border border-green-400/40 rounded-xl p-6 flex flex-col h-full">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="p-2 rounded-lg bg-green-500/30 flex-shrink-0">
+                <Zap className="w-5 h-5 text-green-300" />
               </div>
-              <div>
+              <div className="flex-1">
                 <h3 className="text-base font-medium text-white">Investment Streak</h3>
-                <p className="text-xs text-gray-400">{rewardsData.investmentStreak.months} months</p>
+                <p className="text-xs text-gray-300">{rewardsData.investmentStreak.months} months</p>
               </div>
             </div>
-            <div className="text-2xl font-bold text-green-400 mb-3">
+            <div className="text-2xl font-bold text-green-300 mb-3">
               {rewardsData.investmentStreak.currentProgress}/{rewardsData.investmentStreak.nextMilestone}
             </div>
-            <Progress 
-              value={rewardsData.investmentStreak.completionPercent} 
-              className="mb-3"
-            />
-            <p className="text-xs text-gray-400">
-              {rewardsData.investmentStreak.nextMilestone - rewardsData.investmentStreak.currentProgress} months to next milestone
+            <p className="text-xs text-gray-200 mb-4">
+              {monthsToMilestone} months to next milestone
             </p>
+            <div className="mt-auto">
+              <Progress value={rewardsData.investmentStreak.completionPercent} className="mb-1" />
+              {/* <span className="text-[11px] text-gray-400">{rewardsData.investmentStreak.completionPercent}% complete</span> */}
+            </div>
           </div>
 
-          {/* Leaderboard Position */}
-          <div className="neo-card-elevated p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-blue-500/20">
-                <Trophy className="w-5 h-5 text-blue-400" />
+          {/* Leaderboard */}
+          <div className="bg-blue-500/20 backdrop-blur-md border border-blue-400/40 rounded-xl p-6 flex flex-col h-full">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="p-2 rounded-lg bg-blue-500/30 flex-shrink-0">
+                <Trophy className="w-5 h-5 text-blue-300" />
               </div>
-              <div>
+              <div className="flex-1">
                 <h3 className="text-base font-medium text-white">Your Rank</h3>
-                <p className="text-xs text-gray-400">Among peers</p>
+                <p className="text-xs text-gray-300">Among peers</p>
               </div>
             </div>
-            <div className="text-2xl font-bold text-blue-400 mb-2">
-              #{rewardsData.leaderboard.find(entry => entry.isCurrentUser)?.rank || 'N/A'}
+            <div className="text-2xl font-bold text-blue-300 mb-3">
+              #{me?.rank ?? 'N/A'}
             </div>
-            <Badge variant="secondary" className="text-xs">
-              {rewardsData.leaderboard.find(entry => entry.isCurrentUser)?.badge || 'Beginner'}
-            </Badge>
+            <p className="text-xs text-gray-200 mb-4">
+              {me?.badge ?? 'Rising Star'}
+            </p>
+            <div className="mt-auto">
+              <Badge variant="secondary" className="text-xs">
+                {/* {me?.badge ?? 'Rising Star'} */}
+              </Badge>
+            </div>
           </div>
         </div>
 
@@ -231,7 +208,7 @@ export function Rewards() {
           </h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {rewardsData.challenges.map((challenge) => (
-              <div key={challenge.id} className="neo-card p-4">
+              <div key={challenge.id} className="neo-card p-4 flex flex-col">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-green-500/20">
@@ -244,47 +221,11 @@ export function Rewards() {
                   </div>
                 </div>
                 <Progress value={challenge.completionPercent} className="mb-2" />
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-400">
-                    {challenge.completionPercent}% complete
-                  </span>
+                <div className="flex justify-between items-center mt-auto">
+                  <span className="text-xs text-gray-400">{challenge.completionPercent}% complete</span>
                   <Badge variant="outline" className="text-xs">
                     {challenge.reward}
                   </Badge>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Available Discounts */}
-        <div className="mt-8">
-          <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-            <Gift className="w-5 h-5 text-green-400" />
-            Available Discounts
-          </h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {rewardsData.discounts.map((discount) => (
-              <div key={discount.id} className="neo-card p-4 hover:border-green-500/30 transition-colors">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="text-2xl">{getCategoryIcon(discount.category)}</div>
-                    <div>
-                      <h4 className="text-sm font-medium text-white">{discount.title}</h4>
-                      <p className="text-xs text-gray-400">{discount.provider}</p>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-sm text-green-400 font-medium mb-2">
-                  {discount.discountText}
-                </p>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-400">
-                    Expires: {discount.expiryDate}
-                  </span>
-                  <Button size="sm" className="neo-button text-xs px-3 py-1">
-                    Use Now
-                  </Button>
                 </div>
               </div>
             ))}
@@ -303,18 +244,23 @@ export function Rewards() {
                 <div
                   key={entry.rank}
                   className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
-                    entry.isCurrentUser 
-                      ? 'bg-green-500/10 border border-green-500/20' 
+                    entry.isCurrentUser
+                      ? 'bg-green-500/10 border border-green-500/20'
                       : 'bg-black/20 hover:bg-black/30'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                      entry.rank === 1 ? 'bg-yellow-500/20 text-yellow-400' :
-                      entry.rank === 2 ? 'bg-gray-500/20 text-gray-400' :
-                      entry.rank === 3 ? 'bg-orange-500/20 text-orange-400' :
-                      'bg-gray-600/20 text-gray-300'
-                    }`}>
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                        entry.rank === 1
+                          ? 'bg-yellow-500/20 text-yellow-400'
+                          : entry.rank === 2
+                          ? 'bg-gray-500/20 text-gray-400'
+                          : entry.rank === 3
+                          ? 'bg-orange-500/20 text-orange-400'
+                          : 'bg-gray-600/20 text-gray-300'
+                      }`}
+                    >
                       {entry.rank}
                     </div>
                     <div>

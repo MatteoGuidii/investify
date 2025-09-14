@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { X, Share2, Download, Calendar, Target, TrendingUp, Users, Award, BarChart3 } from 'lucide-react';
+import { X, Share2, Download, Calendar, Target, TrendingUp, Users, Award, BarChart3, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -127,6 +127,78 @@ export function EpicWrapSlideOver({
         </SheetHeader>
 
         <div className="space-y-8 py-6">
+          {/* 2025 Summary Statistics */}
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+          >
+            <div className="flex items-center space-x-2 mb-4">
+              <Trophy className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Your 2025 Summary
+              </h2>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-4 border border-green-200 dark:border-green-700/50">
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  {formatCurrency(kpis.roboAdvisorReturnAbs)}
+                </div>
+                <div className="text-lg font-semibold text-green-700 dark:text-green-300">
+                  {formatPercent(kpis.roboAdvisorReturnPct)}
+                </div>
+                <div className="text-sm text-green-600 dark:text-green-400">
+                  Total return from roboadvisor
+                </div>
+              </div>
+
+              <Kpi
+                label="Amount Invested"
+                value={formatCurrency(kpis.totalInvested)}
+                hint="Total amount you invested this year"
+                testId="summary-amount-invested"
+              />
+
+              <Kpi
+                label="Total Saved"
+                value={formatCurrency(kpis.totalSaved)}
+                hint="Total amount saved across all goals"
+                testId="summary-total-saved"
+              />
+
+              <Kpi
+                label="Saving Streak"
+                value={`${kpis.savingStreakWeeks} weeks`}
+                trend="up"
+                hint="Consecutive weeks with deposits"
+                testId="summary-saving-streak"
+              />
+
+              <Kpi
+                label="Fees Avoided"
+                value={formatCurrency(kpis.feesAvoided)}
+                hint="Estimated brokerage fees saved"
+                testId="summary-fees-avoided"
+              />
+
+              <Kpi
+                label="Auto-Invest Success Rate"
+                value={`${kpis.autoInvestSuccessRatePct}%`}
+                trend={kpis.autoInvestSuccessRatePct >= 90 ? "up" : null}
+                hint="Percentage of successful automated investments"
+                testId="summary-auto-invest"
+              />
+
+              <Kpi
+                label="Diversification Score"
+                value={`${kpis.diversificationScore}/100`}
+                hint="Portfolio balance across asset classes"
+                testId="summary-diversification"
+              />
+            </div>
+          </motion.section>
+
           {/* Performance Overview */}
           <motion.section
             initial={{ opacity: 0, y: 20 }}

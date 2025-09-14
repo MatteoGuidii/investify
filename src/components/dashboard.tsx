@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAppStore } from '../lib/store';
 import { apiService } from '../lib/api';
 import { Button } from './ui/button';
@@ -9,10 +10,12 @@ import { Portfolio } from '../lib/types';
 import { AiCoach } from './ai-coach';
 import { EpicWrapCard } from './wrap/EpicWrapCard';
 import { EpicWrapSlideOver } from './wrap/EpicWrapSlideOver';
+import { EpicWrapFullScreen } from './wrap/EpicWrapFullScreen';
 import { useLocalDismiss } from '../hooks/useLocalDismiss';
 import { EpicWrap } from '../lib/wrap/types';
 
 export function Dashboard() {
+  const router = useRouter();
   const { 
     currentClient,
     userGoals, 
@@ -30,27 +33,38 @@ export function Dashboard() {
   // Epic Wrap state
   const [wrapData, setWrapData] = useState<EpicWrap | null>(null);
   const [showWrapSlideOver, setShowWrapSlideOver] = useState(false);
-  const [wrapDismissed, dismissWrap] = useLocalDismiss('wrap_2025_dismissed');
+  const [showWrapFullScreen, setShowWrapFullScreen] = useState(false);
+  const [showWrapCard, setShowWrapCard] = useState(false);
+  const [wrapDismissed, dismissWrap, resetWrapDismiss] = useLocalDismiss('wrap_2025_dismissed');
 
   // Load Epic Wrap data
   const loadWrapData = async () => {
     try {
+      console.log('Loading wrap data...');
       const response = await fetch('/api/wrap');
       if (response.ok) {
         const data = await response.json();
+        console.log('Wrap data loaded:', data);
         setWrapData(data);
+        setShowWrapCard(true); // Show the wrap card when data is loaded
+        return data; // Return the data for chaining
       }
+      console.log('Failed to load wrap data - response not ok');
+      return null;
     } catch (error) {
       console.warn('Failed to load wrap data:', error);
+      return null;
     }
   };
 
   // Epic Wrap handlers
   const handleViewWrapDetails = () => {
-    setShowWrapSlideOver(true);
+    // Navigate to dedicated wrap page (re-using sidebar content in a page)
+    router.push('/wrap/2025');
   };
 
   const handleDismissWrap = () => {
+    setShowWrapCard(false);
     dismissWrap();
   };
 
@@ -70,12 +84,6 @@ export function Dashboard() {
   };
 
   const loadData = async () => {
-    if (!currentClient) {
-      console.warn('Cannot load data: no current client');
-      return;
-    }
-
-    // Check if we have authentication
     const token = localStorage.getItem('rbc_jwt_token');
     if (!token) {
       console.error('No JWT token found');
@@ -88,10 +96,12 @@ export function Dashboard() {
     setError(null);
     
     try {
-      console.log(`Loading data for client: ${currentClient.id}`);
+      if (!currentClient?.id) {
+        setError('No client selected');
+        return;
+      }
       
-      // Load Epic Wrap data (don't block on this)
-      loadWrapData();
+      console.log(`Loading data for client: ${currentClient.id}`);
       
       // Get updated client data with current cash balance
       const clientResponse = await apiService.getClient(currentClient.id);
@@ -139,6 +149,7 @@ export function Dashboard() {
     // Call loadData only once on mount if we have a current client
     if (currentClient) {
       loadData();
+      // Do NOT auto-load wrap; it should only appear after explicit button click
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentClient?.id]); // Only re-run if client ID changes
@@ -248,8 +259,15 @@ export function Dashboard() {
               <div className="flex gap-2">
                 <Button 
                   variant="outline" 
-                  onClick={() => { setError(null); loadWrapData(); setShowWrapSlideOver(true); }} 
-                  className="neo-button-secondary text-xs px-3 py-1.5"
+                  onClick={async () => {
+                    setError(null);
+                    resetWrapDismiss(); // allow card to reappear even if previously dismissed
+                    const data = await loadWrapData(); // Load the data first
+                    if (data) {
+                      setShowWrapFullScreen(true); // Show the full screen version
+                    }
+                  }} 
+                  className="text-xs px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 hover:text-purple-100 border-purple-400/40 hover:border-purple-300/60 transition-all duration-200 rounded-lg"
                 >
                   <span className="mr-1.5">🎉</span>
                   View Wrap
@@ -294,18 +312,6 @@ export function Dashboard() {
             </div>
           </div>
         </div>
-
-        {/* Epic Wrap Section */}
-        {wrapData && !wrapDismissed && (
-          <div className="max-w-6xl mx-auto mb-6">
-            <EpicWrapCard
-              wrap={wrapData}
-              onViewDetails={handleViewWrapDetails}
-              onDismiss={handleDismissWrap}
-              onShare={handleShareWrap}
-            />
-          </div>
-        )}
 
         {/* Your Goals Section */}
         <div className="max-w-6xl mx-auto">
@@ -446,12 +452,23 @@ export function Dashboard() {
       {/* AI Coach floating assistant */}
       <AiCoach />
 
-      {/* Epic Wrap Slide Over */}
+      {/* Epic Wrap Slide Over (kept for potential future use) */}
       {wrapData && (
         <EpicWrapSlideOver
           wrap={wrapData}
           isOpen={showWrapSlideOver}
           onClose={() => setShowWrapSlideOver(false)}
+          onShare={handleShareWrap}
+          onDownload={handleDownloadWrap}
+        />
+      )}
+
+      {/* Epic Wrap Full Screen */}
+      {wrapData && (
+        <EpicWrapFullScreen
+          wrap={wrapData}
+          isOpen={showWrapFullScreen}
+          onClose={() => setShowWrapFullScreen(false)}
           onShare={handleShareWrap}
           onDownload={handleDownloadWrap}
         />

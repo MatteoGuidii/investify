@@ -8,7 +8,7 @@ export function TrendMiniChart({ points, className = '' }: TrendMiniChartProps) 
   // Don't render if we have insufficient data
   if (!points || points.length < 2) {
     return (
-      <div className={`flex items-center justify-center h-24 text-xs text-gray-400 dark:text-gray-500 ${className}`}>
+      <div className={`flex items-center justify-center h-24 text-xs text-white/80 ${className}`}>
         Insufficient data for chart
       </div>
     );
