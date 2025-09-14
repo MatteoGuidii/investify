@@ -2,15 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
-import {
-  X,
-  Share2,
-  Download,
-  BarChart3,
-  Target,
-  Award,
-  Trophy,
-} from "lucide-react";
+import { X, Share2, BarChart3, Target, Award, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Kpi } from "./Kpi";
 import { EpicWrapSlideOverProps } from "@/lib/wrap/types";
@@ -34,7 +26,12 @@ export function EpicWrapFullScreen({
   onShare,
   onDownload,
 }: EpicWrapSlideOverProps) {
-  const { periodLabel, userFirstName, kpis, timeline, highlights } = wrap;
+  const { periodLabel, userFirstName, kpis, timeline } = wrap;
+
+  // Filter out fee-related and diversification highlights
+  const filteredHighlights = wrap.highlights.filter(
+    (highlight) => !/(fee|avoided|diversification)/i.test(highlight)
+  );
 
   const chartData = timeline.map((point) => ({
     ...point,
@@ -111,9 +108,9 @@ export function EpicWrapFullScreen({
         >
           {/* Backdrop layers (more opaque) */}
           <div className="absolute inset-0 bg-[#05070c]/90" />
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/40 via-[#0B1220]/60 to-blue-900/40" />
+          <div className="absolute inset-0 bg-gradient-to-br from-green-900/30 via-[#0B1220]/60 to-emerald-900/30" />
           <div className="absolute inset-0 backdrop-blur-md" />
-          <div className="absolute inset-0 opacity-[0.08] [background-image:radial-gradient(circle_at_1px_1px,#6366f1_1px,transparent_1px)] [background-size:26px_26px]" />
+          <div className="absolute inset-0 opacity-[0.08] [background-image:radial-gradient(circle_at_1px_1px,#22c55e_1px,transparent_1px)] [background-size:26px_26px]" />
 
           {/* Content container */}
           <motion.div
@@ -129,7 +126,7 @@ export function EpicWrapFullScreen({
             <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/10 bg-black/30 backdrop-blur-xl">
               <div className="flex-1" />
               <div className="text-center">
-                <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 via-purple-300 to-sky-300 drop-shadow-[0_0_10px_rgba(99,102,241,0.25)]">
+                <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-green-300 via-emerald-300 to-green-400 drop-shadow-[0_0_10px_rgba(34,197,94,0.25)] mb-6">
                   Investify Wrapped
                 </h1>
               </div>
@@ -141,15 +138,6 @@ export function EpicWrapFullScreen({
                     className="bg-white/5 text-white border-white/20 hover:bg-white/10"
                   >
                     <Share2 className="w-4 h-4 mr-2" /> Copy Link
-                  </Button>
-                )}
-                {onDownload && (
-                  <Button
-                    variant="outline"
-                    onClick={onDownload}
-                    className="bg-white/5 text-white border-white/20 hover:bg-white/10"
-                  >
-                    <Download className="w-4 h-4 mr-2" /> Download
                   </Button>
                 )}
                 <Button
@@ -172,7 +160,7 @@ export function EpicWrapFullScreen({
                 transition={{ duration: 0.5 }}
               >
                 <div className="flex items-center space-x-2 mb-4">
-                  <Trophy className="w-5 h-5 text-yellow-400" />
+                  <Trophy className="w-5 h-5 text-green-400" />
                   <h2 className="text-xl font-semibold text-white">
                     Your Wrapped Summary
                   </h2>
@@ -192,7 +180,6 @@ export function EpicWrapFullScreen({
                       <span
                         className={`px-3 py-1 rounded-md text-sm font-semibold flex items-center gap-1 ${kpis.roboAdvisorReturnPct >= 0 ? "bg-green-500/15 text-green-300" : "bg-red-500/15 text-red-300"}`}
                       >
-                        {kpis.roboAdvisorReturnPct >= 0 ? "▲" : "▼"}{" "}
                         {formatPercent(kpis.roboAdvisorReturnPct)}
                       </span>
                     </div>
@@ -230,39 +217,6 @@ export function EpicWrapFullScreen({
                       {kpis.savingStreakWeeks} weeks
                     </div>
                   </div>
-
-                  <div className="neo-glass p-4 rounded-xl">
-                    <div className="text-sm text-white/70 mb-1">
-                      Fees Avoided
-                    </div>
-                    <div className="text-2xl font-bold text-white">
-                      {formatCurrency(kpis.feesAvoided)}
-                    </div>
-                    <div className="text-xs text-white/50">
-                      Estimated brokerage fees saved
-                    </div>
-                  </div>
-
-                  <div className="neo-glass p-4 rounded-xl">
-                    <div className="text-sm text-white/70 mb-1">
-                      Auto-Invest Success Rate
-                    </div>
-                    <div className="text-2xl font-bold text-white">
-                      {kpis.autoInvestSuccessRatePct}%
-                    </div>
-                  </div>
-
-                  <div className="neo-glass p-4 rounded-xl">
-                    <div className="text-sm text-white/70 mb-1">
-                      Diversification Score
-                    </div>
-                    <div className="text-2xl font-bold text-white">
-                      {kpis.diversificationScore}/100
-                    </div>
-                    <div className="text-xs text-white/50">
-                      Portfolio balance across asset classes
-                    </div>
-                  </div>
                 </div>
               </motion.section>
 
@@ -274,7 +228,7 @@ export function EpicWrapFullScreen({
                 transition={{ duration: 0.5 }}
               >
                 <div className="flex items-center space-x-2 mb-4">
-                  <BarChart3 className="w-5 h-5 text-blue-400" />
+                  <BarChart3 className="w-5 h-5 text-green-400" />
                   <h2 className="text-xl font-semibold text-white">
                     Performance Overview
                   </h2>
@@ -293,16 +247,12 @@ export function EpicWrapFullScreen({
                           >
                             <stop
                               offset="5%"
-                              stopColor={
-                                isPositiveTrend ? "#22c55e" : "#ef4444"
-                              }
+                              stopColor="#22c55e"
                               stopOpacity={0.35}
                             />
                             <stop
                               offset="95%"
-                              stopColor={
-                                isPositiveTrend ? "#22c55e" : "#ef4444"
-                              }
+                              stopColor="#22c55e"
                               stopOpacity={0.06}
                             />
                           </linearGradient>
@@ -328,13 +278,13 @@ export function EpicWrapFullScreen({
                         <Area
                           type="monotone"
                           dataKey="portfolioValue"
-                          stroke={isPositiveTrend ? "#22c55e" : "#ef4444"}
+                          stroke="#22c55e"
                           strokeWidth={3}
                           fill="url(#portfolioGradientLarge)"
                           dot={false}
                           activeDot={{
                             r: 4,
-                            fill: isPositiveTrend ? "#22c55e" : "#ef4444",
+                            fill: "#22c55e",
                             stroke: "#fff",
                             strokeWidth: 2,
                           }}
@@ -380,12 +330,6 @@ export function EpicWrapFullScreen({
                     testId="fs-kpi-return"
                   />
                   <Kpi
-                    label="Fees Avoided"
-                    value={kpis.feesAvoided}
-                    hint="Estimated brokerage and bank fees saved"
-                    testId="fs-kpi-fees"
-                  />
-                  <Kpi
                     label="Best Month"
                     value={`${kpis.bestMonth.month} (${formatPercent(kpis.bestMonth.returnPct)})`}
                     hint={`${formatCurrency(kpis.bestMonth.netDeposits)} in net deposits`}
@@ -419,23 +363,23 @@ export function EpicWrapFullScreen({
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-80px" }}
                 transition={{ duration: 0.5, delay: 0.1 }}
-                className="mt-8"
+                className="mt-8 mb-8"
               >
                 <div className="flex items-center space-x-2 mb-4">
-                  <Award className="w-5 h-5 text-yellow-400" />
+                  <Award className="w-5 h-5 text-green-400" />
                   <h2 className="text-xl font-semibold text-white">
                     Highlights
                   </h2>
                 </div>
                 <div className="space-y-3">
-                  {highlights.map((highlight, index) => (
+                  {filteredHighlights.map((highlight, index) => (
                     <motion.div
                       key={index}
                       initial={{ opacity: 0, x: -16 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
                       transition={{ duration: 0.4, delay: 0.15 + index * 0.05 }}
-                      className="flex items-start space-x-3 p-3 bg-green-400/10 rounded-lg"
+                      className="flex items-start space-x-3 p-3 bg-green-500/10 rounded-lg"
                     >
                       <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0" />
                       <p className="text-white/90 leading-relaxed">
@@ -443,36 +387,6 @@ export function EpicWrapFullScreen({
                       </p>
                     </motion.div>
                   ))}
-                </div>
-              </motion.section>
-
-              {/* Methodology */}
-              <motion.section
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-80px" }}
-                transition={{ duration: 0.5, delay: 0.15 }}
-                className="mt-10 border-t border-white/10 pt-6"
-              >
-                <h2 className="text-lg font-semibold text-white mb-3">
-                  Methodology
-                </h2>
-                <div className="text-sm text-white/70 space-y-2">
-                  <p>
-                    <strong>Returns:</strong> Time-weighted returns calculated
-                    using daily portfolio valuations, net of fees and adjusted
-                    for deposits and withdrawals.
-                  </p>
-                  <p>
-                    <strong>Diversification Score:</strong> Measures portfolio
-                    balance across asset classes, sectors, and geographic
-                    regions on a scale of 0-100.
-                  </p>
-                  <p>
-                    <strong>Fees Avoided:</strong> Estimated based on typical
-                    brokerage commissions and management fees for similar
-                    investment amounts.
-                  </p>
                 </div>
               </motion.section>
             </div>

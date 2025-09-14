@@ -7,7 +7,7 @@ import { apiService } from "../lib/api";
 import { Button } from "./ui/button";
 import { PlusCircle, RefreshCw, Wallet } from "lucide-react";
 import { Portfolio } from "../lib/types";
-import { AiCoach } from "./ai-coach";
+import { AiCoach } from "./ai-coach-new";
 import { EpicWrapSlideOver } from "./wrap/EpicWrapSlideOver";
 import { EpicWrapFullScreen } from "./wrap/EpicWrapFullScreen";
 import { useLocalDismiss } from "../hooks/useLocalDismiss";
@@ -597,7 +597,7 @@ export function Dashboard() {
       </div>
 
       {/* AI Coach floating assistant aligned with Account Overview */}
-      <AiCoach anchorRect={accountOverviewRect} colorful />
+      <AiCoach />
 
       {/* Epic Wrap Slide Over (kept for potential future use) */}
       {wrapData && (

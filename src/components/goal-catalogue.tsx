@@ -90,7 +90,7 @@ export function GoalCatalogue() {
 
         {/* Header */}
         <div className="max-w-6xl mx-auto text-center mb-8">
-          <div className="neo-card p-6 mb-6">
+          <div className="neo-card p-6 mb-6 border-2 border-green-500 bg-green-800">
             <h1 className="text-3xl font-semibold mb-3 text-white">
               {userGoals.length > 0
                 ? "Add Another Goal"

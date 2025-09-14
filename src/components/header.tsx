@@ -1,9 +1,17 @@
-'use client';
+"use client";
 
-import { useAppStore } from '../lib/store';
+import { useAppStore } from "../lib/store";
+import { BarChart3, Target, Trophy } from "lucide-react";
 
 export function Header() {
-  const { user, currentClient, currentView, setCurrentView, logout } = useAppStore();
+  const { user, currentClient, currentView, setCurrentView, logout } =
+    useAppStore();
+
+  const navigationItems = [
+    { key: "dashboard", label: "Dashboard", icon: BarChart3 },
+    { key: "catalogue", label: "Goals", icon: Target },
+    { key: "rewards", label: "Rewards", icon: Trophy },
+  ];
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
@@ -27,23 +35,22 @@ export function Header() {
 
             {/* Navigation */}
             <nav className="flex items-center space-x-1 bg-white/5 rounded-2xl p-1 border border-white/10">
-              {[
-                { key: 'dashboard', label: 'Dashboard', icon: '📊' },
-                { key: 'catalogue', label: 'Goals', icon: '🎯' },
-                { key: 'rewards', label: 'Rewards', icon: '🏆' },
-              ].map(({ key, label, icon }) => (
+              {navigationItems.map(({ key, label, icon: Icon }) => (
                 <button
                   key={key}
-                  onClick={() => setCurrentView(key as 'dashboard' | 'catalogue' | 'rewards')}
+                  onClick={() =>
+                    setCurrentView(key as "dashboard" | "catalogue" | "rewards")
+                  }
                   className={`
                     flex items-center space-x-2 px-4 py-2.5 rounded-xl text-base font-medium transition-all duration-300
-                    ${currentView === key 
-                      ? 'bg-white/20 text-white shadow-lg border border-white/20' 
-                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                    ${
+                      currentView === key
+                        ? "bg-white/20 text-white shadow-lg border border-white/20"
+                        : "text-white/70 hover:text-white hover:bg-white/10"
                     }
                   `}
                 >
-                  <span className="text-base">{icon}</span>
+                  <Icon className="w-4 h-4 text-green-400" />
                   <span>{label}</span>
                 </button>
               ))}
@@ -55,15 +62,17 @@ export function Header() {
               <div className="flex items-center space-x-3">
                 <div className="text-right">
                   <div className="text-base font-semibold text-white">
-                    {currentClient?.name || user?.teamName || 'Test User'}
+                    {currentClient?.name || user?.teamName || "Test User"}
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={logout}
                   className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center hover:scale-105 transition-transform"
                 >
                   <span className="text-base font-bold text-white">
-                    {(currentClient?.name || user?.teamName || 'Test User').charAt(0).toUpperCase()}
+                    {(currentClient?.name || user?.teamName || "Test User")
+                      .charAt(0)
+                      .toUpperCase()}
                   </span>
                   <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-neo-accent rounded-full border-2 border-slate-900"></div>
                 </button>
