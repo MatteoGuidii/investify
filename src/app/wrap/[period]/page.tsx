@@ -9,7 +9,6 @@ import {
   Award,
   ArrowLeft,
   Share2,
-  Download,
   Volume2,
   VolumeX,
 } from "lucide-react";
@@ -47,8 +46,11 @@ export default function WrapPage() {
   const startEpicSound = async () => {
     try {
       if (!audioCtxRef.current) {
-        audioCtxRef.current = new (window.AudioContext ||
-          (window as any).webkitAudioContext)();
+        const AnyWindow = window as unknown as {
+          webkitAudioContext?: typeof AudioContext;
+        };
+        const Ctx = window.AudioContext || AnyWindow.webkitAudioContext;
+        audioCtxRef.current = new Ctx();
       }
       const ctx = audioCtxRef.current;
       if (ctx.state === "suspended") await ctx.resume();
@@ -82,7 +84,7 @@ export default function WrapPage() {
       lfoGain.connect(filter.frequency);
       lfo.start();
 
-      nodesRef.current = { osc, gain, filter } as any; // store primary nodes
+  nodesRef.current = { osc, gain, filter }; // store primary nodes
 
       // Fade in
       const now = ctx.currentTime;
@@ -139,8 +141,9 @@ export default function WrapPage() {
         if (!res.ok) throw new Error("Failed to load wrap");
         const data: EpicWrap = await res.json();
         setWrap(data);
-      } catch (e: any) {
-        setError(e?.message || "Failed to load wrap");
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : "Failed to load wrap";
+        setError(message);
       } finally {
         setLoading(false);
       }
@@ -155,22 +158,30 @@ export default function WrapPage() {
       startEpicSound();
     }, 250);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const chartData = useMemo(() => {
-    if (!wrap) return [] as any[];
-    return wrap.timeline.map((point) => ({
-      ...point,
-      date: parseISO(point.date),
-      formattedDate: format(parseISO(point.date), "MMM dd"),
-      formattedValue: new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(point.portfolioValue),
-    }));
+  interface ChartPoint {
+    date: Date;
+    portfolioValue: number;
+    formattedDate: string;
+    formattedValue: string;
+  }
+  const chartData = useMemo<ChartPoint[]>(() => {
+    if (!wrap) return [];
+    return wrap.timeline.map((point) => {
+      const parsed = parseISO(point.date);
+      return {
+        date: parsed,
+        portfolioValue: point.portfolioValue,
+        formattedDate: format(parsed, "MMM dd"),
+        formattedValue: new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        }).format(point.portfolioValue),
+      };
+    });
   }, [wrap]);
 
   const yDomain = useMemo(() => {
@@ -344,9 +355,11 @@ export default function WrapPage() {
                     className="text-xs fill-white"
                   />
                   <Tooltip
-                    content={({ active, payload }: any) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
+                    content={({ active, payload }) => {
+                      type PayloadItem = { payload: ChartPoint };
+                      const cast = payload as unknown as PayloadItem[] | undefined;
+                      if (active && cast && cast.length) {
+                        const data = cast[0].payload;
                         return (
                           <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg">
                             <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
