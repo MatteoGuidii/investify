@@ -28,6 +28,8 @@ export function AiCoach({ className = '' }: AiCoachProps) {
   const [hasInitialized, setHasInitialized] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
+  // Consent state: null = not asked yet, true = granted, false = declined
+  const [hasConsent, setHasConsent] = useState<boolean | null>(null);
   const [showParticles, setShowParticles] = useState(false);
   const [position] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -35,6 +37,7 @@ export function AiCoach({ className = '' }: AiCoachProps) {
 
   const fetchInsight = useCallback(async (forceRefresh = false) => {
     if (isLoading) return;
+    if (hasConsent !== true) return; // Guard: only fetch after consent
     
     setIsLoading(true);
     setIsThinking(true);
@@ -65,17 +68,22 @@ export function AiCoach({ className = '' }: AiCoachProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading]);
+  }, [isLoading, hasConsent]);
 
   const handleIconClick = () => {
+    // Always open popup for welcome/consent if not granted
+    if (hasConsent !== true) {
+      setShowSuggestion(true);
+      setShowWelcome(true);
+      return;
+    }
     if (!showSuggestion && !suggestion && !isLoading) {
       fetchInsight();
+      setShowSuggestion(true);
     } else if (suggestion && !showSuggestion) {
-      // Show suggestion and trigger particle effect when clicked
-  setShowSuggestion(true);
-  setShowParticles(true);
+      setShowSuggestion(true);
+      setShowParticles(true);
     } else if (suggestion && showSuggestion) {
-      // Toggle visibility if already shown
       setShowSuggestion(!showSuggestion);
     }
   };
@@ -92,21 +100,41 @@ export function AiCoach({ className = '' }: AiCoachProps) {
     setShowSuggestion(false);
   };
 
-  // Initialize with welcome message, then fetch insight but don't auto-show
+  // Load consent from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('aiCoachConsent');
+      if (stored === 'granted') setHasConsent(true);
+      else if (stored === 'declined') setHasConsent(false);
+      else setHasConsent(null);
+    } catch {/* ignore */}
+  }, []);
+
+  // Initial mount: show welcome immediately (with consent buttons inside) if no consent stored; if granted previously, skip welcome and fetch lazily on click.
   useEffect(() => {
     if (!hasInitialized) {
-      // Show welcome message first
-      setTimeout(() => {
+      if (hasConsent !== true) {
+        setShowSuggestion(true);
         setShowWelcome(true);
-        // Hide welcome and start fetching insight
-        setTimeout(() => {
-          setShowWelcome(false);
-          fetchInsight();
-          setHasInitialized(true);
-        }, 3000); // Show welcome for 3 seconds
-      }, 1500);
+      }
+      setHasInitialized(true);
     }
-  }, [fetchInsight, hasInitialized]);
+  }, [hasInitialized, hasConsent]);
+
+  const grantConsent = () => {
+    setHasConsent(true);
+    try { localStorage.setItem('aiCoachConsent', 'granted'); } catch {/* ignore */}
+    // Transition out of welcome and fetch first insight
+    setShowWelcome(false);
+    fetchInsight();
+  };
+  const declineConsent = () => {
+    setHasConsent(false);
+    try { localStorage.setItem('aiCoachConsent', 'declined'); } catch {/* ignore */}
+    setShowWelcome(false);
+    // Close popup since user declined
+    setShowSuggestion(false);
+  };
 
   return (
     <>
@@ -248,7 +276,7 @@ export function AiCoach({ className = '' }: AiCoachProps) {
 
       {/* Compact Inline Suggestion Popup - responsive positioning */}
       <AnimatePresence>
-        {(showSuggestion || showWelcome) && (
+  {(showSuggestion || showWelcome) && (
           <motion.div
             className="fixed z-40 left-4 right-4 sm:left-auto sm:right-6 sm:w-96 sm:max-w-sm"
             style={{
@@ -280,7 +308,7 @@ export function AiCoach({ className = '' }: AiCoachProps) {
               )}
 
               {/* Header */}
-              <div className="flex items-center gap-2 mb-3 relative z-10">
+      <div className="flex items-center gap-2 mb-3 relative z-10">
                 <motion.div
                   className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center"
                   animate={{ rotate: [0, 360] }}
@@ -290,10 +318,10 @@ export function AiCoach({ className = '' }: AiCoachProps) {
                 </motion.div>
                 <div>
                   <h3 className="font-semibold text-gray-900 text-sm">
-                    {showWelcome ? 'AI Financial Coach' : 'AI Financial Insight'}
+                    {showWelcome ? 'AI Financial Coach' : (hasConsent === true ? 'AI Financial Insight' : 'AI Financial Coach')}
                   </h3>
                   <p className="text-xs text-gray-600">
-                    {showWelcome ? 'Just arrived!' : 'Personalized for you'}
+                    {showWelcome ? 'Just arrived!' : (hasConsent === true ? 'Personalized for you' : 'Your preference saved')}
                   </p>
                 </div>
               </div>
@@ -308,8 +336,23 @@ export function AiCoach({ className = '' }: AiCoachProps) {
                   >
                     <div className="bg-white bg-opacity-80 rounded-xl p-3 border border-gray-100">
                       <p className="text-gray-800 text-sm leading-relaxed">
-                        Hi there! 👋 I&apos;m your AI financial coach. Give me a moment to analyze your spending patterns...
+                        Hi there! 👋 I&apos;m your AI financial coach. Give me a moment and we can explore insights together.
+                        <br /><br />Would you like to see AI-generated financial insights now?
                       </p>
+                      <div className="flex gap-2 pt-3">
+                        <button
+                          onClick={grantConsent}
+                          className="flex-1 px-3 py-2 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          Yes
+                        </button>
+                        <button
+                          onClick={declineConsent}
+                          className="px-3 py-2 bg-gray-100 text-gray-700 text-xs rounded-lg hover:bg-gray-200 transition-colors"
+                        >
+                          Not now
+                        </button>
+                      </div>
                     </div>
                     <div className="flex justify-center mt-2">
                       <div className="flex space-x-1">
@@ -317,15 +360,8 @@ export function AiCoach({ className = '' }: AiCoachProps) {
                           <motion.div
                             key={i}
                             className="w-2 h-2 bg-blue-500 rounded-full"
-                            animate={{
-                              scale: [1, 1.2, 1],
-                              opacity: [0.7, 1, 0.7]
-                            }}
-                            transition={{
-                              duration: 0.8,
-                              repeat: Infinity,
-                              delay: i * 0.2
-                            }}
+                            animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
+                            transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.2 }}
                           />
                         ))}
                       </div>
