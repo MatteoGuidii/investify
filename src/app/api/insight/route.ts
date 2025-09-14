@@ -344,14 +344,35 @@ Example format: "I noticed [trend] 📊 [Specific action] and you'll [specific b
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const { goal, spending, mode } = body as {
+    const { goal, goals, spending, mode } = body as {
       goal?: { name: string; currentAmount: number; targetAmount: number; monthlyContribution: number };
+      goals?: Array<{ name: string; currentAmount: number; targetAmount: number; monthlyContribution: number }>;
       spending?: MockData['spending'];
       mode?: 'optimized' | 'random';
     };
 
+    // Branch 1: multiple goals (preferred when user has active goals)
+    if (goals && Array.isArray(goals) && goals.length > 0) {
+      const syntheticMulti: MockData = {
+        spending: spending || mockData.spending, // still derive trends from mock spending (requirement)
+        goals: goals.map(g => ({
+          name: g.name,
+          target: g.targetAmount,
+            currentSaved: g.currentAmount,
+            monthlyContribution: g.monthlyContribution,
+            category: 'custom',
+            deadline: ''
+        })),
+        monthlyIncome: mockData.monthlyIncome,
+        profile: mockData.profile
+      };
+      const insight = computeLocalInsight(syntheticMulti);
+      return NextResponse.json({ suggestion: insight.suggestion, chartData: insight.chartData, metrics: insight.metrics, source: 'dynamic_goals' });
+    }
+
+    // Branch 2: single goal (legacy usage)
     if (!goal) {
-      return NextResponse.json({ error: 'goal object required' }, { status: 400 });
+      return NextResponse.json({ error: 'goal object required (or goals array)' }, { status: 400 });
     }
 
     // Build a temporary data object using provided spending override or fallback to mockData spending
@@ -372,7 +393,7 @@ export async function POST(request: Request) {
     };
 
     // Reuse computation (focusGoal = provided goal name)
-  const insight = computeLocalInsight(synthetic, goal.name);
+    const insight = computeLocalInsight(synthetic, goal.name);
 
     // Adjust extra based on mode if requested
     if (insight.chartData && insight.metrics) {

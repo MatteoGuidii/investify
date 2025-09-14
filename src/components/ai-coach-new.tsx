@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useAppStore } from '@/lib/store';
 import { Bot, Sparkles, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -57,6 +58,8 @@ export function AiCoach({ className = "" }: AiCoachProps) {
   // DEBUG: To test first-time behavior, run this in browser console:
   // localStorage.removeItem('aiCoachVisited'); localStorage.removeItem('aiCoachConsent'); location.reload();
 
+  const userGoals = useAppStore(s => s.userGoals);
+
   const fetchInsight = useCallback(async () => {
     if (isLoading) return;
     if (hasConsent !== true) return;
@@ -66,7 +69,23 @@ export function AiCoach({ className = "" }: AiCoachProps) {
     setError("");
 
     try {
-      const response = await fetch("/api/insight");
+      const active = userGoals.filter(g => g.status === 'active' || g.status === 'planning');
+      let response: Response;
+      if (active.length > 0) {
+        const goalsPayload = active.map(g => ({
+          name: g.goal.title,
+          currentAmount: g.currentAmount,
+          targetAmount: g.targetAmount,
+          monthlyContribution: g.monthlyContribution
+        }));
+        response = await fetch('/api/insight', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ goals: goalsPayload })
+        });
+      } else {
+        response = await fetch('/api/insight');
+      }
       const data = await response.json();
 
       if (response.ok) {
@@ -89,7 +108,7 @@ export function AiCoach({ className = "" }: AiCoachProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, hasConsent]);
+  }, [isLoading, hasConsent, userGoals]);
 
   const handleIconClick = () => {
     // If showing initial greeting, let user interact with it

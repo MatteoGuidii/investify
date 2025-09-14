@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useAppStore } from '@/lib/store';
 import { Bot, X, TrendingUp, Sparkles, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ParticleEffect } from './particle-effect';
@@ -41,6 +42,8 @@ export function AiCoach({ className = '', anchorRect, colorful = false }: AiCoac
   // Removed blinking attention effect state
 
   // Central fetch function; optional bypass to avoid race condition right after granting consent
+  const userGoals = useAppStore(s => s.userGoals);
+
   const fetchInsight = useCallback(async (forceRefresh = false, bypassConsent = false) => {
     if (isLoading) return;
     // Guard unless explicitly bypassed (e.g., immediately after user grants consent before state closure updates)
@@ -51,8 +54,25 @@ export function AiCoach({ className = '', anchorRect, colorful = false }: AiCoac
     setError('');
     
     try {
-      const url = forceRefresh ? '/api/insight?refresh=true' : '/api/insight';
-      const response = await fetch(url);
+      // Prefer POST with user's in-progress goals; fallback to GET using mock goals
+      const active = userGoals.filter(g => g.status === 'active' || g.status === 'planning');
+      let response: Response;
+      if (active.length > 0) {
+        const goalsPayload = active.map(g => ({
+          name: g.goal.title,
+          currentAmount: g.currentAmount,
+          targetAmount: g.targetAmount,
+          monthlyContribution: g.monthlyContribution
+        }));
+        response = await fetch('/api/insight', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ goals: goalsPayload, mode: forceRefresh ? 'random' : undefined })
+        });
+      } else {
+        const url = forceRefresh ? '/api/insight?refresh=true' : '/api/insight';
+        response = await fetch(url);
+      }
       const data = await response.json();
       
       if (response.ok) {
@@ -75,7 +95,7 @@ export function AiCoach({ className = '', anchorRect, colorful = false }: AiCoac
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, hasConsent]);
+  }, [isLoading, hasConsent, userGoals]);
 
   const handleIconClick = () => {
     // If user never granted consent yet (either first time or previously declined) -> open popup.
