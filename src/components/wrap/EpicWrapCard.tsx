@@ -48,66 +48,61 @@ export function EpicWrapCard({
       transition={{ duration: 0.5, ease: "easeOut" }}
       className="w-full"
     >
-      <Card className="relative overflow-hidden border-2 border-gradient-to-r from-blue-500/20 to-purple-500/20 bg-gradient-to-br from-white to-blue-50/30 dark:from-gray-900 dark:to-blue-900/10">
-        {/* Background decoration */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-full blur-2xl transform translate-x-16 -translate-y-16" />
-        
-        <CardHeader className="relative">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {periodLabel}
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  A standout period for staying invested
-                </p>
-              </div>
+      <div className="neo-card p-6 relative">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 rounded-lg bg-green-400/20 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-green-400" />
             </div>
-            
-            <div className="flex items-center space-x-2">
-              <Badge 
-                variant="secondary" 
-                className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-              >
-                New
-              </Badge>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onDismiss}
-                className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-                aria-label="Dismiss wrap-up"
-              >
-                <X className="w-4 h-4" />
-              </Button>
+            <div>
+              <h3 className="text-white font-medium text-lg">
+                {periodLabel}
+              </h3>
+              <p className="text-white/80 text-sm">
+                A standout period for staying invested
+              </p>
             </div>
           </div>
-        </CardHeader>
+          
+          <div className="flex items-center space-x-2">
+            <Badge 
+              variant="secondary" 
+              className="bg-green-400/20 text-green-400 border-green-400/30"
+            >
+              New
+            </Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onDismiss}
+              className="h-8 w-8 p-0 text-gray-400 hover:text-gray-300"
+              aria-label="Dismiss wrap-up"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
 
-        <CardContent className="space-y-6">
+        <div className="space-y-6">
           {/* Hero Stats */}
-          <div className="text-center space-y-2">
-            <div className="flex items-center justify-center space-x-2">
-              <span className={`text-3xl font-bold ${isPositiveReturn ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+          <div className="neo-glass p-4 rounded-xl text-center">
+            <div className="flex items-center justify-center space-x-2 mb-2">
+              <span className={`text-2xl font-semibold ${isPositiveReturn ? 'text-green-400' : 'text-red-400'}`}>
                 {formatCurrency(totalReturn)}
               </span>
               <Badge 
                 variant={isPositiveReturn ? "default" : "destructive"}
-                className="flex items-center space-x-1"
+                className="flex items-center space-x-1 text-white"
               >
                 {isPositiveReturn ? (
                   <TrendingUp className="w-3 h-3" />
                 ) : (
                   <TrendingDown className="w-3 h-3" />
                 )}
-                <span>{formatPercent(totalReturnPct)}</span>
+                <span className="text-white">{formatPercent(totalReturnPct)}</span>
               </Badge>
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
+            <p className="text-sm text-white">
               Total return from roboadvisor
             </p>
           </div>
@@ -151,20 +146,20 @@ export function EpicWrapCard({
 
           {/* Mini Trend Chart */}
           <div className="space-y-2">
-            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <h4 className="text-sm font-medium text-white/90">
               Portfolio Growth Trend
             </h4>
             <TrendMiniChart 
               points={timeline.slice(-12)} // Show last 12 points for card view
-              className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2"
+              className="neo-glass p-2 rounded-lg"
             />
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-700/30">
             <Button 
               onClick={onViewDetails}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              className="flex-1 neo-button-primary"
             >
               <Eye className="w-4 h-4 mr-2" />
               View Details
@@ -174,7 +169,7 @@ export function EpicWrapCard({
               <Button 
                 variant="outline" 
                 onClick={onShare}
-                className="flex-1 sm:flex-none"
+                className="flex-1 sm:flex-none text-white border-white/20 hover:bg-white/10"
               >
                 <Share2 className="w-4 h-4 mr-2" />
                 Share
@@ -183,11 +178,11 @@ export function EpicWrapCard({
           </div>
 
           {/* Footnote */}
-          <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+          <p className="text-xs text-white/70 text-center">
             Data reflects your activity during the period.
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </motion.div>
   );
 }
