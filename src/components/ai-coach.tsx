@@ -30,8 +30,6 @@ export function AiCoach({ className = '' }: AiCoachProps) {
   const [showWelcome, setShowWelcome] = useState(false);
   // Consent state: null = not asked yet, true = granted, false = declined
   const [hasConsent, setHasConsent] = useState<boolean | null>(null);
-  // Consent state: null = not asked yet, true = granted, false = declined
-  const [hasConsent, setHasConsent] = useState<boolean | null>(null);
   const [showParticles, setShowParticles] = useState(false);
   const [position] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -117,8 +115,6 @@ export function AiCoach({ className = '' }: AiCoachProps) {
   // Initial mount: show welcome immediately (with consent buttons inside) if no consent stored; if granted previously, skip welcome and fetch lazily on click.
   useEffect(() => {
     if (!hasInitialized) {
-      if (hasConsent !== true) {
-        setShowSuggestion(true);
       if (hasConsent !== true) {
         setShowSuggestion(true);
         setShowWelcome(true);
