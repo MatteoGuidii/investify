@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { X, Share2, BarChart3, Target, Award, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Kpi } from "./Kpi";
@@ -105,6 +105,15 @@ export function EpicWrapFullScreen({
     }
   }, [isOpen]);
 
+  const [shared, setShared] = useState(false);
+  const handleShareClick = async () => {
+    if (onShare) {
+      await onShare();
+      setShared(true);
+      setTimeout(() => setShared(false), 2000);
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -142,10 +151,10 @@ export function EpicWrapFullScreen({
                 {onShare && (
                   <Button
                     variant="outline"
-                    onClick={onShare}
+                    onClick={handleShareClick}
                     className="bg-white/5 text-white border-white/20 hover:bg-white/10"
                   >
-                    <Share2 className="w-4 h-4 mr-2" /> Copy Link
+                    <Share2 className="w-4 h-4 mr-2" /> {shared ? 'Copied!' : 'Copy Link'}
                   </Button>
                 )}
                 <Button

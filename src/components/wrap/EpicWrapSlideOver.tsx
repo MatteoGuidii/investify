@@ -30,6 +30,7 @@ import {
 import { format, parseISO } from "date-fns";
 import { Kpi } from "./Kpi";
 import { EpicWrapSlideOverProps } from "@/lib/wrap/types";
+import { useState } from "react";
 
 export function EpicWrapSlideOver({
   wrap,
@@ -112,6 +113,16 @@ export function EpicWrapSlideOver({
     }
   };
 
+  const [shared, setShared] = useState<null | "copied" | "shared">(null);
+  const handleShareClick = async () => {
+    if (onShare) {
+      await onShare();
+      // onShare already handles share; we just set optimistic feedback
+      setShared("copied");
+      setTimeout(() => setShared(null), 2000);
+    }
+  };
+
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent
@@ -143,9 +154,13 @@ export function EpicWrapSlideOver({
           {/* Action Buttons */}
           <div className="flex gap-2">
             {onShare && (
-              <Button variant="outline" onClick={onShare} className="flex-1">
+              <Button
+                variant="outline"
+                onClick={handleShareClick}
+                className="flex-1"
+              >
                 <Share2 className="w-4 h-4 mr-2" />
-                Copy Link
+                {shared === "copied" ? "Copied!" : "Copy Link"}
               </Button>
             )}
             {onDownload && (

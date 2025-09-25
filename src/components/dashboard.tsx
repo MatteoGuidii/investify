@@ -12,6 +12,7 @@ import { EpicWrapSlideOver } from "./wrap/EpicWrapSlideOver";
 import { EpicWrapFullScreen } from "./wrap/EpicWrapFullScreen";
 import { useLocalDismiss } from "../hooks/useLocalDismiss";
 import { EpicWrap } from "../lib/wrap/types";
+import { shareWrap } from "../lib/share";
 
 export function Dashboard() {
   const {
@@ -36,7 +37,7 @@ export function Dashboard() {
   const [showWrapFullScreen, setShowWrapFullScreen] = useState(false);
   // Anchor for AI Coach alignment (Account Overview section)
   const accountOverviewRef = useRef<HTMLDivElement | null>(null);
-  const [accountOverviewRect, setAccountOverviewRect] =
+  const [_accountOverviewRect, setAccountOverviewRect] =
     useState<DOMRect | null>(null);
 
   // Measure account overview section for AI Coach positioning
@@ -76,17 +77,20 @@ export function Dashboard() {
   // Epic Wrap handlers
   // (Removed unused handleViewWrapDetails & handleDismissWrap to reduce lint noise)
 
-  const handleShareWrap = () => {
-    // Copy link to clipboard
-    const url = `${window.location.origin}/wrap/2025`;
-    navigator.clipboard
-      .writeText(url)
-      .then(() => {
-        console.log("Wrap link copied to clipboard");
-      })
-      .catch(() => {
-        console.warn("Failed to copy wrap link");
-      });
+  const [shareStatus, setShareStatus] = useState<null | 'copied' | 'shared' | 'error'>(null);
+
+  const handleShareWrap = async () => {
+    const period = '2025'; // TODO: derive dynamically if multiple periods supported
+    try {
+      const result = await shareWrap(period);
+      setShareStatus(result.ok ? (result.method === 'web-share' ? 'shared' : 'copied') : 'error');
+      setTimeout(() => setShareStatus(null), 2500);
+      console.log(`Wrap link ${result.ok ? 'shared' : 'failed'} via ${result.method}: ${result.url}`);
+    } catch (err) {
+      console.warn('Failed to share wrap link', err);
+      setShareStatus('error');
+      setTimeout(() => setShareStatus(null), 2500);
+    }
   };
 
   const handleDownloadWrap = () => {
@@ -619,6 +623,14 @@ export function Dashboard() {
           onShare={handleShareWrap}
           onDownload={handleDownloadWrap}
         />
+      )}
+      {/* Share feedback (simple toast replacement) */}
+      {shareStatus && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded shadow text-sm z-50">
+          {shareStatus === 'copied' && 'Link copied to clipboard'}
+          {shareStatus === 'shared' && 'Share dialog opened'}
+          {shareStatus === 'error' && 'Failed to share link'}
+        </div>
       )}
     </div>
   );

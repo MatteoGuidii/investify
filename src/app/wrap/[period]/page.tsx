@@ -25,6 +25,7 @@ import {
 } from "recharts";
 import { format, parseISO } from "date-fns";
 import type { EpicWrap } from "@/lib/wrap/types";
+import { shareWrap } from "@/lib/share";
 
 export default function WrapPage() {
   const router = useRouter();
@@ -219,6 +220,19 @@ export default function WrapPage() {
       maximumFractionDigits: 1,
     }).format(value / 100);
 
+  const [shareStatus, setShareStatus] = useState<null | 'copied' | 'shared' | 'error'>(null);
+
+  const handleShare = async () => {
+    try {
+      const result = await shareWrap(period);
+      setShareStatus(result.ok ? (result.method === 'web-share' ? 'shared' : 'copied') : 'error');
+      setTimeout(() => setShareStatus(null), 2500);
+    } catch (_e) {
+      setShareStatus('error');
+      setTimeout(() => setShareStatus(null), 2500);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-neo-dark flex items-center justify-center">
@@ -279,9 +293,10 @@ export default function WrapPage() {
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
+              onClick={handleShare}
               className="bg-white/5 text-white border-white/20 hover:bg-white/10"
             >
-              <Share2 className="w-4 h-4 mr-2" /> Copy Link
+              <Share2 className="w-4 h-4 mr-2" /> {shareStatus === 'copied' ? 'Copied!' : shareStatus === 'shared' ? 'Shared' : 'Copy Link'}
             </Button>
             {soundOn ? (
               <Button
@@ -482,6 +497,14 @@ export default function WrapPage() {
         </motion.section>
 
         {/* Methodology section removed per requirements */}
+
+        {shareStatus && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded shadow text-sm z-50">
+          {shareStatus === 'copied' && 'Link copied to clipboard'}
+          {shareStatus === 'shared' && 'Share dialog opened'}
+          {shareStatus === 'error' && 'Failed to share link'}
+        </div>
+      )}
       </div>
     </div>
   );
